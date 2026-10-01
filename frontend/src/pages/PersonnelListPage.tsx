@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
+import { useAuth } from '../auth/useAuth'
 import { ApiError, apiRequest, toQueryString } from '../lib/api'
 import type { PaginationMeta, Personnel, ReferenceOptions } from '../types'
 
@@ -11,6 +12,8 @@ interface PersonnelResponse {
 }
 
 export function PersonnelListPage() {
+  const { user } = useAuth()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [personnel, setPersonnel] = useState<Personnel[]>([])
   const [meta, setMeta] = useState<PaginationMeta | null>(null)
@@ -18,10 +21,17 @@ export function PersonnelListPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchDraft, setSearchDraft] = useState(searchParams.get('search') ?? '')
+  const [regionDraft, setRegionDraft] = useState(searchParams.get('operasi_wilayah') ?? '')
 
   const query = useMemo(() => ({
     search: searchParams.get('search') || undefined,
     bidang_fungsi_id: searchParams.get('bidang_fungsi_id') || undefined,
+    operasi_wilayah: searchParams.get('operasi_wilayah') || undefined,
+    operasi_tingkat: searchParams.get('operasi_tingkat') || undefined,
+    operasi_bidang_fungsi_id: searchParams.get('operasi_bidang_fungsi_id') || undefined,
+    operasi_verifikasi: searchParams.get('operasi_verifikasi') || undefined,
+    min_jumlah_operasi: searchParams.get('min_jumlah_operasi') || undefined,
+    min_durasi_operasi_hari: searchParams.get('min_durasi_operasi_hari') || undefined,
     status: searchParams.get('status') || undefined,
     sort: searchParams.get('sort') || 'nama',
     direction: searchParams.get('direction') || 'asc',
@@ -58,7 +68,7 @@ export function PersonnelListPage() {
     const next = new URLSearchParams(searchParams)
     if (value) next.set(key, value)
     else next.delete(key)
-    next.delete('page')
+    if (key !== 'page') next.delete('page')
     setSearchParams(next)
   }
 
@@ -71,9 +81,10 @@ export function PersonnelListPage() {
 
   return (
     <div className="page-wrap">
+      {location.state?.message && <div className="alert success" role="status">{location.state.message}</div>}
       <header className="page-header reveal">
         <div><span className="eyebrow">Basis data merit</span><h1>Data Personel</h1><p>Telusuri identitas, kualifikasi, dan rekam jabatan dalam satu pandangan.</p></div>
-        <Link className="primary-cta compact" to="/personel/tambah"><span>Tambah personel</span><span className="cta-icon">+</span></Link>
+        {user?.permissions?.create_personnel && <Link className="primary-cta compact" to="/personel/tambah"><span>Tambah personel</span><span className="cta-icon">+</span></Link>}
       </header>
 
       <section className="metric-row reveal delay-one" aria-label="Ringkasan data">
@@ -98,14 +109,24 @@ export function PersonnelListPage() {
               <option value="">Semua status</option><option value="aktif">Aktif</option><option value="pensiun">Pensiun</option><option value="nonaktif">Nonaktif</option>
             </select>
             <select value={searchParams.get('sort') ?? 'nama'} onChange={(event) => setFilter('sort', event.target.value)} aria-label="Urutkan data">
-              <option value="nama">Nama</option><option value="pangkat">Pangkat</option><option value="jumlah_kualifikasi">Kualifikasi terbanyak</option><option value="durasi_pengalaman">Pengalaman terlama</option><option value="kualifikasi_terbaru">Kualifikasi terbaru</option><option value="terbaru">Baru ditambahkan</option>
+              <option value="nama">Nama</option><option value="pangkat">Pangkat</option><option value="jumlah_kualifikasi">Kualifikasi terbanyak</option><option value="durasi_pengalaman">Pengalaman terlama</option><option value="kualifikasi_terbaru">Kualifikasi terbaru</option><option value="jumlah_operasi">Jumlah operasi</option><option value="durasi_operasi">Durasi operasi</option><option value="terbaru">Baru ditambahkan</option>
             </select>
+          </div>
+
+          <div className="filter-bar merit-filter-bar" aria-label="Filter penugasan operasi">
+            <form className="search-box" onSubmit={(event) => { event.preventDefault(); setFilter('operasi_wilayah', regionDraft.trim()) }}><input value={regionDraft} onChange={(event) => setRegionDraft(event.target.value)} placeholder="Wilayah operasi, mis. Papua…" aria-label="Wilayah operasi" /><button type="submit">Terapkan</button></form>
+            <select value={searchParams.get('operasi_tingkat') ?? ''} onChange={(event) => setFilter('operasi_tingkat', event.target.value)} aria-label="Tingkat operasi"><option value="">Semua tingkat operasi</option><option value="satker">Satker</option><option value="kabupaten_kota">Kabupaten/Kota</option><option value="provinsi">Provinsi</option><option value="nasional">Nasional</option><option value="internasional">Internasional</option></select>
+            <select value={searchParams.get('operasi_bidang_fungsi_id') ?? ''} onChange={(event) => setFilter('operasi_bidang_fungsi_id', event.target.value)} aria-label="Fungsi operasi"><option value="">Semua fungsi operasi</option>{references?.bidang_fungsi.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select>
+            <select value={searchParams.get('operasi_verifikasi') ?? ''} onChange={(event) => setFilter('operasi_verifikasi', event.target.value)} aria-label="Verifikasi operasi"><option value="">Semua status verifikasi</option><option value="terverifikasi">Terverifikasi</option><option value="belum_diverifikasi">Belum diverifikasi</option></select>
+            <select value={searchParams.get('min_jumlah_operasi') ?? ''} onChange={(event) => setFilter('min_jumlah_operasi', event.target.value)} aria-label="Minimal jumlah operasi"><option value="">Semua jumlah operasi</option><option value="1">Minimal 1 operasi</option><option value="2">Minimal 2 operasi</option><option value="3">Minimal 3 operasi</option></select>
+            <select value={searchParams.get('min_durasi_operasi_hari') ?? ''} onChange={(event) => setFilter('min_durasi_operasi_hari', event.target.value)} aria-label="Minimal durasi operasi"><option value="">Semua durasi operasi</option><option value="30">Minimal 30 hari</option><option value="90">Minimal 90 hari</option><option value="365">Minimal 365 hari</option></select>
+            <select value={searchParams.get('direction') ?? 'asc'} onChange={(event) => setFilter('direction', event.target.value)} aria-label="Arah urutan"><option value="asc">Terkecil → terbesar</option><option value="desc">Terbesar → terkecil</option></select>
           </div>
 
           {error && <div className="alert error">{error}</div>}
           <div className={`data-table-wrap ${loading ? 'is-loading' : ''}`}>
             <table className="data-table">
-              <thead><tr><th>Personel</th><th>Jabatan saat ini</th><th>Satker</th><th>Kualifikasi relevan</th><th>Pengalaman</th><th aria-label="Aksi"/></tr></thead>
+              <thead><tr><th>Personel</th><th>Jabatan saat ini</th><th>Satker</th><th>Kualifikasi relevan</th><th>Pengalaman</th><th>Operasi</th><th aria-label="Aksi"/></tr></thead>
               <tbody>
                 {!loading && personnel.map((person) => (
                   <tr key={person.id}>
@@ -114,10 +135,11 @@ export function PersonnelListPage() {
                     <td><span className="muted-cell">{person.unit_organisasi?.nama}</span></td>
                     <td><strong className="numeric-cell">{person.ringkasan_relevan?.jumlah_kualifikasi ?? person.jumlah_kualifikasi ?? 0}</strong><small>kegiatan</small></td>
                     <td><strong className="numeric-cell">{years(person.ringkasan_relevan?.durasi_pengalaman_hari)}</strong><small>tahun</small></td>
+                    <td><strong className="numeric-cell">{person.ringkasan_operasi?.jumlah ?? 0}</strong><small>{person.ringkasan_operasi?.total_durasi_hari ?? 0} hari kumulatif</small></td>
                     <td><Link className="row-action" to={`/personel/${person.id}`} aria-label={`Lihat ${person.nama_lengkap}`}><Icon name="chevron" size={17}/></Link></td>
                   </tr>
                 ))}
-                {loading && Array.from({ length: 5 }).map((_, index) => <tr className="skeleton-row" key={index}><td colSpan={6}><span/></td></tr>)}
+                {loading && Array.from({ length: 5 }).map((_, index) => <tr className="skeleton-row" key={index}><td colSpan={7}><span/></td></tr>)}
               </tbody>
             </table>
             {!loading && personnel.length === 0 && <div className="empty-state"><Icon name="search" size={28}/><strong>Belum ada hasil</strong><p>Ubah kata pencarian atau filter yang digunakan.</p></div>}

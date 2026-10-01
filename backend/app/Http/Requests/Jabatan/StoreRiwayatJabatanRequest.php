@@ -38,7 +38,7 @@ class StoreRiwayatJabatanRequest extends FormRequest
             'nivelering' => ['nullable', 'string', 'max:50'],
             'is_jabatan_utama' => ['required', 'boolean'],
             'keterangan' => ['nullable', 'string', 'max:1000'],
-            'dokumen_sk' => ['nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:5120'],
+            'dokumen_sk' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:5120'],
         ];
     }
 

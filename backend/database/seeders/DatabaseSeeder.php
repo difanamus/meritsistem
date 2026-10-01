@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             PersonelSeeder::class,
             KualifikasiPersonelSeeder::class,
             RiwayatJabatanSeeder::class,
+            MeritProfileSeeder::class,
         ]);
     }
 }

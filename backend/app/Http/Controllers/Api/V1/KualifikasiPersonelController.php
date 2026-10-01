@@ -65,6 +65,15 @@ class KualifikasiPersonelController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    public function show(KualifikasiPersonel $kualifikasi): JsonResponse
+    {
+        Gate::authorize('view', $kualifikasi);
+
+        return KualifikasiPersonelResource::make($this->loadRelations($kualifikasi))
+            ->additional(['success' => true, 'message' => 'Detail kualifikasi berhasil diambil.'])
+            ->response();
+    }
+
     public function update(UpdateKualifikasiRequest $request, KualifikasiPersonel $kualifikasi): JsonResponse
     {
         $data = $request->validated();

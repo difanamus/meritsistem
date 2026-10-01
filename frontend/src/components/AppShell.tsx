@@ -6,7 +6,7 @@ export function AppShell() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const isDetail = location.pathname.split('/').length > 2
+  const canManageUsers = user?.role === 'system_admin' || user?.role === 'admin_ssdm'
 
   const handleLogout = async () => {
     await logout()
@@ -23,16 +23,32 @@ export function AppShell() {
           </div>
 
           <nav className="primary-nav" aria-label="Navigasi utama">
-            <NavLink to="/personel" className={({ isActive }) => isActive && !isDetail ? 'active' : ''}>
+            <span className="nav-group-label">Ruang kerja</span>
+            <NavLink to="/dashboard" aria-label="Dashboard">
+              <span className="nav-icon"><Icon name="dashboard" /></span><span>Dashboard</span>
+            </NavLink>
+            <NavLink to="/personel" aria-label="Data Personel" className={() => location.pathname.startsWith('/personel') ? 'active' : ''}>
               <span className="nav-icon"><Icon name="people" /></span>
               <span>Data Personel</span>
             </NavLink>
+            {canManageUsers && <span className="nav-group-label">Administrasi</span>}
+            {canManageUsers && <NavLink to="/pengguna" aria-label="Pengguna dan Scope" className={() => location.pathname.startsWith('/pengguna') ? 'active' : ''}>
+              <span className="nav-icon"><Icon name="shield" /></span>
+              <span>Pengguna & Scope</span>
+            </NavLink>}
+            <NavLink to="/referensi" aria-label="Data Referensi" className={() => location.pathname.startsWith('/referensi') ? 'active' : ''}>
+              <span className="nav-icon"><Icon name="briefcase" /></span>
+              <span>Data Referensi</span>
+            </NavLink>
+            {user?.role === 'system_admin' && <NavLink to="/sistem" aria-label="Monitoring Sistem">
+              <span className="nav-icon"><Icon name="server" /></span><span>Monitoring Sistem</span>
+            </NavLink>}
           </nav>
 
           <div className="scope-card">
             <span className="eyebrow">Cakupan akses</span>
             <strong>{user?.role_label}</strong>
-            <p>{user?.role === 'operator' ? user.scopes.map((scope) => scope.unit_organisasi.nama).join(', ') : 'Seluruh organisasi POLRI'}</p>
+            <p>{user?.role === 'operator' ? (user.permissions?.create_personnel ? 'Unit sesuai scope aktif · lihat dashboard' : 'Belum memiliki scope aktif') : 'Seluruh organisasi POLRI'}</p>
           </div>
 
           <div className="user-card">

@@ -14,9 +14,14 @@ erDiagram
     PANGKAT ||--o{ PERSONEL : dimiliki
     PERSONEL ||--o{ KUALIFIKASI_PERSONEL : memiliki
     PERSONEL ||--o{ RIWAYAT_JABATAN : menjalani
+    PERSONEL ||--o{ PENUGASAN_OPERASI : menjalani
+    PERSONEL ||--o{ PRESTASI_PERSONEL : mencapai
+    PERSONEL ||--o{ PENGHARGAAN_PERSONEL : menerima
     JENIS_KUALIFIKASI ||--o{ KUALIFIKASI_PERSONEL : mengelompokkan
     BIDANG_FUNGSI o|--o{ KUALIFIKASI_PERSONEL : relevan_untuk
     BIDANG_FUNGSI ||--o{ RIWAYAT_JABATAN : bidang
+    BIDANG_FUNGSI o|--o{ PENUGASAN_OPERASI : bidang
+    BIDANG_FUNGSI o|--o{ PRESTASI_PERSONEL : bidang
     JENIS_PENUGASAN ||--o{ RIWAYAT_JABATAN : berstatus
     UNIT_ORGANISASI ||--o{ RIWAYAT_JABATAN : lokasi
 
@@ -90,6 +95,53 @@ erDiagram
         string dokumen_sk_path
         timestamp deleted_at
     }
+    PENUGASAN_OPERASI {
+        bigint id PK
+        bigint personel_id FK
+        bigint bidang_fungsi_id FK
+        string nama
+        string jenis_operasi
+        string tingkat
+        string wilayah
+        string peran
+        string satgas_unit
+        date tanggal_mulai
+        date tanggal_selesai
+        string status_verifikasi
+        bigint verified_by FK
+        string dokumen_path
+        timestamp deleted_at
+    }
+    PRESTASI_PERSONEL {
+        bigint id PK
+        bigint personel_id FK
+        bigint bidang_fungsi_id FK
+        string nama
+        string kategori
+        string tingkat
+        string hasil
+        string penyelenggara
+        integer tahun
+        string peran
+        string status_verifikasi
+        bigint verified_by FK
+        string dokumen_path
+        timestamp deleted_at
+    }
+    PENGHARGAAN_PERSONEL {
+        bigint id PK
+        bigint personel_id FK
+        string nama
+        string pemberi
+        string tingkat
+        string nomor_keputusan
+        date tanggal_keputusan
+        string alasan
+        string status_verifikasi
+        bigint verified_by FK
+        string dokumen_path
+        timestamp deleted_at
+    }
     BIDANG_FUNGSI {
         bigint id PK
         string kode UK
@@ -116,6 +168,7 @@ Catatan constraint penting:
 - Partial unique index menjamin hanya satu jabatan utama aktif per personel.
 - Soft delete dipakai pada data domain agar penghapusan operasional tidak langsung menghilangkan histori.
 - Path PDF tersimpan di database, sedangkan berkas berada pada storage privat.
+- Penugasan operasi, prestasi, dan penghargaan masing-masing memiliki satu PDF opsional privat, status verifikasi, aktor, dan waktu verifikasi. Perubahan fakta membatalkan verifikasi sebelumnya.
 
 ## Alur authentication
 

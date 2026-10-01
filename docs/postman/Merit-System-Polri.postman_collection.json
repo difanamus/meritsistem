@@ -11,6 +11,13 @@
   },
   "item": [
     {
+      "name": "Dashboard & Monitoring",
+      "item": [
+        { "name": "Dashboard sesuai role dan scope", "request": { "method": "GET", "url": "{{base_url}}/dashboard" } },
+        { "name": "Monitoring khusus System Admin", "request": { "method": "GET", "url": "{{base_url}}/system-status" } }
+      ]
+    },
+    {
       "name": "Authentication",
       "item": [
         {
@@ -39,6 +46,44 @@
         },
         { "name": "Profil Saya", "request": { "method": "GET", "url": "{{base_url}}/auth/me" } },
         { "name": "Logout", "request": { "method": "POST", "url": "{{base_url}}/auth/logout" } }
+      ]
+    },
+    {
+      "name": "Pengguna & Scope",
+      "item": [
+        {
+          "name": "Daftar Pengguna",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/users?status=active&sort=name&direction=asc&per_page=10"
+          }
+        },
+        { "name": "Detail Pengguna", "request": { "method": "GET", "url": "{{base_url}}/users/{{user_id}}" } },
+        {
+          "name": "Tambah Operator dengan Scope",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Operator Demo Postman\",\n  \"email\": \"operator.demo@example.test\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\",\n  \"role\": \"operator\",\n  \"is_active\": true,\n  \"scopes\": [\n    {\n      \"unit_organisasi_id\": {{unit_id}},\n      \"scope_type\": \"unit_and_descendants\",\n      \"is_active\": true,\n      \"berlaku_mulai\": \"2026-01-01\",\n      \"berlaku_sampai\": null\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/users"
+          }
+        },
+        {
+          "name": "Ubah Pengguna dan Scope",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Operator Demo Diperbarui\",\n  \"email\": \"operator.demo@example.test\",\n  \"password\": \"\",\n  \"password_confirmation\": \"\",\n  \"role\": \"operator\",\n  \"is_active\": true,\n  \"scopes\": [\n    {\n      \"unit_organisasi_id\": {{unit_id}},\n      \"scope_type\": \"own_unit\",\n      \"is_active\": true,\n      \"berlaku_mulai\": null,\n      \"berlaku_sampai\": null\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/users/{{user_id}}"
+          }
+        },
+        { "name": "Nonaktifkan dan Cabut Token", "request": { "method": "DELETE", "url": "{{base_url}}/users/{{user_id}}" } }
       ]
     },
     {
@@ -90,6 +135,7 @@
     {
       "name": "Kualifikasi",
       "item": [
+        { "name": "Detail untuk Form Edit", "request": { "method": "GET", "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}" } },
         { "name": "Daftar", "request": { "method": "GET", "url": "{{base_url}}/personel/{{personel_id}}/kualifikasi" } },
         {
           "name": "Tambah dengan PDF Opsional",
@@ -113,17 +159,23 @@
           "name": "Ubah",
           "request": {
             "method": "PUT",
-            "body": { "mode": "formdata", "formdata": [{ "key": "nama_kualifikasi", "value": "Pelatihan Analisis Intelijen Lanjutan", "type": "text" }] },
+            "body": { "mode": "raw", "raw": "{\"nama_kualifikasi\":\"Pelatihan Analisis Intelijen Lanjutan\"}" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}"
           }
         },
         { "name": "Download PDF", "request": { "method": "GET", "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}/dokumen" } },
+        { "name": "Ganti PDF melalui Method Override", "request": { "method": "POST", "body": { "mode": "formdata", "formdata": [{ "key": "_method", "value": "PUT", "type": "text" }, { "key": "dokumen_pendukung", "type": "file", "src": [], "disabled": true }] }, "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}" } },
+        { "name": "Lepas PDF", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"hapus_dokumen\":true}" }, "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}" } },
         { "name": "Soft Delete", "request": { "method": "DELETE", "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}" } }
       ]
     },
     {
       "name": "Riwayat Jabatan dan Mutasi",
       "item": [
+        { "name": "Detail Riwayat untuk Form Edit", "request": { "method": "GET", "url": "{{base_url}}/riwayat-jabatan/{{riwayat_jabatan_id}}" } },
+        { "name": "Edit Riwayat + SK Opsional", "request": { "method": "POST", "body": { "mode": "formdata", "formdata": [{ "key": "_method", "value": "PUT", "type": "text" }, { "key": "keterangan", "value": "Koreksi catatan riwayat", "type": "text" }, { "key": "dokumen_sk", "type": "file", "src": [], "disabled": true }] }, "url": "{{base_url}}/riwayat-jabatan/{{riwayat_jabatan_id}}" } },
+        { "name": "Lepas SK PDF", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"hapus_dokumen\":true}" }, "url": "{{base_url}}/riwayat-jabatan/{{riwayat_jabatan_id}}" } },
         { "name": "Daftar Riwayat", "request": { "method": "GET", "url": "{{base_url}}/personel/{{personel_id}}/riwayat-jabatan" } },
         {
           "name": "Tambah Penugasan Tambahan",
@@ -184,6 +236,691 @@
     {
       "name": "Referensi",
       "item": [{ "name": "Opsi Form Sesuai Scope", "request": { "method": "GET", "url": "{{base_url}}/reference-options" } }]
+    },
+    {
+      "name": "Administrasi Referensi",
+      "item": [
+        {
+          "name": "Unit Organisasi",
+          "item": [
+            {
+              "name": "Daftar + Filter",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/unit-organisasi?per_page=10&status=active"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/unit-organisasi/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Tambah",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Unit Organisasi Demo\",\n  \"is_active\": true,\n  \"parent_id\": {{unit_id}},\n  \"jenis_unit\": \"satker_polres\"\n}"
+                },
+                "url": "{{base_url}}/references/unit-organisasi"
+              }
+            },
+            {
+              "name": "Ubah / Aktifkan / Nonaktifkan",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Unit Organisasi Demo\",\n  \"is_active\": true,\n  \"parent_id\": {{unit_id}},\n  \"jenis_unit\": \"satker_polres\"\n}"
+                },
+                "url": "{{base_url}}/references/unit-organisasi/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Hapus Referensi Belum Dipakai",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/references/unit-organisasi/{{reference_id}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pangkat",
+          "item": [
+            {
+              "name": "Daftar + Filter",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/pangkat?per_page=10&status=active"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/pangkat/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Tambah",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Pangkat Demo\",\n  \"is_active\": true,\n  \"jenis_personel\": \"polri\",\n  \"urutan\": 10\n}"
+                },
+                "url": "{{base_url}}/references/pangkat"
+              }
+            },
+            {
+              "name": "Ubah / Aktifkan / Nonaktifkan",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Pangkat Demo\",\n  \"is_active\": true,\n  \"jenis_personel\": \"polri\",\n  \"urutan\": 10\n}"
+                },
+                "url": "{{base_url}}/references/pangkat/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Hapus Referensi Belum Dipakai",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/references/pangkat/{{reference_id}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bidang Fungsi",
+          "item": [
+            {
+              "name": "Daftar + Filter",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/bidang-fungsi?per_page=10&status=active"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/bidang-fungsi/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Tambah",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Bidang Fungsi Demo\",\n  \"is_active\": true,\n  \"deskripsi\": \"Referensi demo\"\n}"
+                },
+                "url": "{{base_url}}/references/bidang-fungsi"
+              }
+            },
+            {
+              "name": "Ubah / Aktifkan / Nonaktifkan",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Bidang Fungsi Demo\",\n  \"is_active\": true,\n  \"deskripsi\": \"Referensi demo\"\n}"
+                },
+                "url": "{{base_url}}/references/bidang-fungsi/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Hapus Referensi Belum Dipakai",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/references/bidang-fungsi/{{reference_id}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jenis Kualifikasi",
+          "item": [
+            {
+              "name": "Daftar + Filter",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/jenis-kualifikasi?per_page=10&status=active"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/jenis-kualifikasi/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Tambah",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Jenis Kualifikasi Demo\",\n  \"is_active\": true\n}"
+                },
+                "url": "{{base_url}}/references/jenis-kualifikasi"
+              }
+            },
+            {
+              "name": "Ubah / Aktifkan / Nonaktifkan",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Jenis Kualifikasi Demo\",\n  \"is_active\": true\n}"
+                },
+                "url": "{{base_url}}/references/jenis-kualifikasi/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Hapus Referensi Belum Dipakai",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/references/jenis-kualifikasi/{{reference_id}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Jenis Penugasan",
+          "item": [
+            {
+              "name": "Daftar + Filter",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/jenis-penugasan?per_page=10&status=active"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/references/jenis-penugasan/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Tambah",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Jenis Penugasan Demo\",\n  \"is_active\": true\n}"
+                },
+                "url": "{{base_url}}/references/jenis-penugasan"
+              }
+            },
+            {
+              "name": "Ubah / Aktifkan / Nonaktifkan",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"kode\": \"DEMO\",\n  \"nama\": \"Jenis Penugasan Demo\",\n  \"is_active\": true\n}"
+                },
+                "url": "{{base_url}}/references/jenis-penugasan/{{reference_id}}"
+              }
+            },
+            {
+              "name": "Hapus Referensi Belum Dipakai",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/references/jenis-penugasan/{{reference_id}}"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Perluasan Profil Merit",
+      "item": [
+        {
+          "name": "Penugasan Operasi",
+          "item": [
+            {
+              "name": "Daftar",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/personel/{{personel_id}}/merit/penugasan-operasi?per_page=15"
+              }
+            },
+            {
+              "name": "Tambah",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const body = pm.response.json();",
+                      "if (body.data?.id) pm.environment.set('merit_record_id', body.data.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama\": \"Operasi Demo Postman\",\n  \"tingkat\": \"nasional\",\n  \"jenis_operasi\": \"Operasi kewilayahan\",\n  \"wilayah\": \"Papua\",\n  \"peran\": \"Anggota Satgas\",\n  \"satgas_unit\": \"Satgas Demo\",\n  \"tanggal_mulai\": \"2024-01-01\",\n  \"tanggal_selesai\": \"2024-01-31\"\n}"
+                },
+                "url": "{{base_url}}/personel/{{personel_id}}/merit/penugasan-operasi"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/merit/penugasan-operasi/{{merit_record_id}}"
+              }
+            },
+            {
+              "name": "Edit JSON",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"nama\":\"Operasi Demo Postman Revisi\"}"
+                },
+                "url": "{{base_url}}/merit/penugasan-operasi/{{merit_record_id}}"
+              }
+            },
+            {
+              "name": "Ganti PDF / Hapus PDF",
+              "request": {
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "_method",
+                      "value": "PUT",
+                      "type": "text"
+                    },
+                    {
+                      "key": "dokumen",
+                      "type": "file",
+                      "src": ""
+                    },
+                    {
+                      "key": "hapus_dokumen",
+                      "value": "false",
+                      "type": "text",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": "{{base_url}}/merit/penugasan-operasi/{{merit_record_id}}",
+                "description": "Pilih berkas PDF maks. 5 MB untuk ganti. Untuk menghapus, disable field dokumen dan aktifkan hapus_dokumen=true."
+              }
+            },
+            {
+              "name": "Verifikasi Admin SSDM",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"status_verifikasi\":\"terverifikasi\"}"
+                },
+                "url": "{{base_url}}/merit/penugasan-operasi/{{merit_record_id}}/verifikasi"
+              }
+            },
+            {
+              "name": "Unduh PDF",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/merit/penugasan-operasi/{{merit_record_id}}/dokumen"
+              }
+            },
+            {
+              "name": "Arsipkan",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/merit/penugasan-operasi/{{merit_record_id}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prestasi",
+          "item": [
+            {
+              "name": "Daftar",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/personel/{{personel_id}}/merit/prestasi?per_page=15"
+              }
+            },
+            {
+              "name": "Tambah",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const body = pm.response.json();",
+                      "if (body.data?.id) pm.environment.set('merit_record_id', body.data.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama\": \"Juara Demo Postman\",\n  \"tingkat\": \"nasional\",\n  \"kategori\": \"olahraga\",\n  \"hasil\": \"Juara 1\",\n  \"penyelenggara\": \"Panitia Demo\",\n  \"tahun\": 2024,\n  \"peran\": \"individu\"\n}"
+                },
+                "url": "{{base_url}}/personel/{{personel_id}}/merit/prestasi"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/merit/prestasi/{{merit_record_id}}"
+              }
+            },
+            {
+              "name": "Edit JSON",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"nama\":\"Juara Demo Postman Revisi\"}"
+                },
+                "url": "{{base_url}}/merit/prestasi/{{merit_record_id}}"
+              }
+            },
+            {
+              "name": "Ganti PDF / Hapus PDF",
+              "request": {
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "_method",
+                      "value": "PUT",
+                      "type": "text"
+                    },
+                    {
+                      "key": "dokumen",
+                      "type": "file",
+                      "src": ""
+                    },
+                    {
+                      "key": "hapus_dokumen",
+                      "value": "false",
+                      "type": "text",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": "{{base_url}}/merit/prestasi/{{merit_record_id}}",
+                "description": "Pilih berkas PDF maks. 5 MB untuk ganti. Untuk menghapus, disable field dokumen dan aktifkan hapus_dokumen=true."
+              }
+            },
+            {
+              "name": "Verifikasi Admin SSDM",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"status_verifikasi\":\"terverifikasi\"}"
+                },
+                "url": "{{base_url}}/merit/prestasi/{{merit_record_id}}/verifikasi"
+              }
+            },
+            {
+              "name": "Unduh PDF",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/merit/prestasi/{{merit_record_id}}/dokumen"
+              }
+            },
+            {
+              "name": "Arsipkan",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/merit/prestasi/{{merit_record_id}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Penghargaan",
+          "item": [
+            {
+              "name": "Daftar",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/personel/{{personel_id}}/merit/penghargaan?per_page=15"
+              }
+            },
+            {
+              "name": "Tambah",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const body = pm.response.json();",
+                      "if (body.data?.id) pm.environment.set('merit_record_id', body.data.id);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nama\": \"Penghargaan Demo Postman\",\n  \"tingkat\": \"satker\",\n  \"pemberi\": \"Pimpinan Demo\",\n  \"nomor_keputusan\": \"KEP-DEMO/2024\",\n  \"tanggal_keputusan\": \"2024-01-01\",\n  \"alasan\": \"Pengabdian tugas\"\n}"
+                },
+                "url": "{{base_url}}/personel/{{personel_id}}/merit/penghargaan"
+              }
+            },
+            {
+              "name": "Detail",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/merit/penghargaan/{{merit_record_id}}"
+              }
+            },
+            {
+              "name": "Edit JSON",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"nama\":\"Penghargaan Demo Postman Revisi\"}"
+                },
+                "url": "{{base_url}}/merit/penghargaan/{{merit_record_id}}"
+              }
+            },
+            {
+              "name": "Ganti PDF / Hapus PDF",
+              "request": {
+                "method": "POST",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "_method",
+                      "value": "PUT",
+                      "type": "text"
+                    },
+                    {
+                      "key": "dokumen",
+                      "type": "file",
+                      "src": ""
+                    },
+                    {
+                      "key": "hapus_dokumen",
+                      "value": "false",
+                      "type": "text",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": "{{base_url}}/merit/penghargaan/{{merit_record_id}}",
+                "description": "Pilih berkas PDF maks. 5 MB untuk ganti. Untuk menghapus, disable field dokumen dan aktifkan hapus_dokumen=true."
+              }
+            },
+            {
+              "name": "Verifikasi Admin SSDM",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"status_verifikasi\":\"terverifikasi\"}"
+                },
+                "url": "{{base_url}}/merit/penghargaan/{{merit_record_id}}/verifikasi"
+              }
+            },
+            {
+              "name": "Unduh PDF",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/merit/penghargaan/{{merit_record_id}}/dokumen"
+              }
+            },
+            {
+              "name": "Arsipkan",
+              "request": {
+                "method": "DELETE",
+                "url": "{{base_url}}/merit/penghargaan/{{merit_record_id}}"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }

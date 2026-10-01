@@ -5,6 +5,9 @@ export interface UserScope {
   scope_type: 'own_unit' | 'unit_and_descendants'
   scope_type_label: string
   unit_organisasi: ReferenceItem
+  is_active: boolean
+  berlaku_mulai?: string | null
+  berlaku_sampai?: string | null
 }
 
 export interface User {
@@ -15,6 +18,9 @@ export interface User {
   role_label: string
   is_active: boolean
   scopes: UserScope[]
+  permissions?: { create_personnel: boolean }
+  created_at?: string
+  updated_at?: string
 }
 
 export interface ReferenceItem {
@@ -64,6 +70,7 @@ export interface Personnel {
     durasi_pengalaman_hari: number
     tahun_kualifikasi_terbaru: number | null
   }
+  ringkasan_operasi?: { jumlah: number; total_durasi_hari: number }
   jabatan_utama_aktif?: Position | null
   penugasan_tambahan_aktif?: Position[]
   kualifikasi?: Qualification[]
@@ -87,4 +94,75 @@ export interface ReferenceOptions {
   bidang_fungsi: ReferenceItem[]
   jenis_kualifikasi: ReferenceItem[]
   jenis_penugasan: ReferenceItem[]
+}
+
+export interface PrivateDocument {
+  nama_asli: string
+  mime: string
+  ukuran: number
+  download_url: string
+}
+
+export interface QualificationRecord {
+  id: number
+  personel_id: number
+  jenis_kualifikasi: ReferenceItem
+  bidang_fungsi: ReferenceItem | null
+  nama_kualifikasi: string
+  jenjang: string | null
+  bidang_studi: string | null
+  institusi_penyelenggara: string | null
+  tanggal_mulai: string | null
+  tanggal_selesai: string | null
+  tahun: number | null
+  nomor_dokumen: string | null
+  keterangan: string | null
+  dokumen: PrivateDocument | null
+}
+
+export interface PositionRecord {
+  id: number
+  personel_id: number
+  nama_jabatan: string
+  unit_organisasi: ReferenceItem
+  bidang_fungsi: ReferenceItem
+  jenis_penugasan: ReferenceItem
+  tanggal_mulai: string
+  tanggal_selesai: string | null
+  nivelering: string | null
+  is_jabatan_utama: boolean
+  keterangan: string | null
+  dokumen: PrivateDocument | null
+}
+
+export type MeritKind = 'penugasan-operasi' | 'prestasi' | 'penghargaan'
+
+export interface MeritRecord {
+  id: number
+  personel_id: number
+  nama: string
+  tingkat: string
+  bidang_fungsi: ReferenceItem | null
+  keterangan: string | null
+  status_verifikasi: 'belum_diverifikasi' | 'terverifikasi'
+  verified_by: { id: number; nama: string } | null
+  verified_at: string | null
+  dokumen: PrivateDocument | null
+  kode_operasi?: string | null
+  jenis_operasi?: string
+  wilayah?: string
+  peran?: string
+  satgas_unit?: string
+  tanggal_mulai?: string
+  tanggal_selesai?: string | null
+  nomor_surat_perintah?: string | null
+  kategori?: string
+  hasil?: string
+  penyelenggara?: string
+  tanggal?: string | null
+  tahun?: number
+  pemberi?: string
+  nomor_keputusan?: string | null
+  tanggal_keputusan?: string
+  alasan?: string
 }

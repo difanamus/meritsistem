@@ -12,6 +12,7 @@ use App\Models\KualifikasiPersonel;
 use App\Models\Pangkat;
 use App\Models\Personel;
 use App\Models\RiwayatJabatan;
+use App\Services\MeritProfileService;
 use App\Services\OrganizationalScopeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,7 @@ class PersonelController extends Controller
     public function index(
         IndexPersonelRequest $request,
         OrganizationalScopeService $scopeService,
+        MeritProfileService $meritProfile,
     ): AnonymousResourceCollection {
         $filters = $request->validated();
         $functionId = $filters['bidang_fungsi_id'] ?? null;
@@ -54,6 +56,8 @@ class PersonelController extends Controller
                 ->whereColumn('kualifikasi_personel.personel_id', 'personel.id')
                 ->when($functionId, fn (Builder $query, int $id) => $query->where('bidang_fungsi_id', $id)),
         ]);
+
+        $meritProfile->summarizeOperations($query, $filters);
 
         $query
             ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
@@ -88,6 +92,8 @@ class PersonelController extends Controller
             'jumlah_kualifikasi' => $query->orderBy('jumlah_kualifikasi_relevan', $direction),
             'durasi_pengalaman' => $query->orderBy('durasi_pengalaman_hari', $direction),
             'kualifikasi_terbaru' => $query->orderBy('tahun_kualifikasi_terbaru', $direction),
+            'jumlah_operasi' => $query->orderBy('jumlah_operasi', $direction),
+            'durasi_operasi' => $query->orderBy('durasi_operasi_hari', $direction),
             default => $query->orderBy('nama_lengkap', $direction),
         };
 

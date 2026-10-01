@@ -2,18 +2,98 @@ openapi: 3.1.0
 info:
   title: Merit System Personel Polri API
   version: 1.0.0
-  description: REST API untuk identitas personel, kualifikasi, riwayat jabatan, dan mutasi berbasis scope organisasi.
+  description: REST API untuk identitas personel, kualifikasi, riwayat jabatan, mutasi, serta profil merit berbasis scope organisasi.
 servers:
   - url: http://127.0.0.1:8000/api/v1
     description: Development lokal
 tags:
   - name: Authentication
+  - name: Pengguna
   - name: Personel
   - name: Kualifikasi
   - name: Riwayat Jabatan
   - name: Proses Jabatan
   - name: Referensi
+  - name: Administrasi Referensi
+  - name: Profil Merit
 paths:
+  /dashboard:
+    get:
+      tags: [Personel]
+      summary: Ringkasan faktual sesuai scope aktif dan role
+      description: Jumlah personel per status, kualifikasi, jabatan aktif, unit, dan maksimal lima profil terakhir diperbarui. Soft-deleted tidak dihitung. Operator tidak menerima hitungan akun; Admin SSDM hanya hitungan akun Operator. Tanpa scope aktif menghasilkan ringkasan kosong.
+      responses:
+        '200':
+          description: Ringkasan cakupan akses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      scope:
+                        type: object
+                        properties:
+                          global: { type: boolean }
+                          unit_count: { type: integer }
+                      personnel:
+                        type: object
+                        properties:
+                          total: { type: integer }
+                          aktif: { type: integer }
+                          pensiun: { type: integer }
+                          nonaktif: { type: integer }
+                      qualifications: { type: integer }
+                      active_positions: { type: integer }
+                      accounts:
+                        type: [object, 'null']
+                        properties:
+                          total: { type: integer }
+                          active: { type: integer }
+                          label: { type: string }
+                      recent_personnel:
+                        type: array
+                        maxItems: 5
+                        items:
+                          type: object
+                          properties:
+                            id: { type: integer }
+                            nama_lengkap: { type: string }
+                            unit: { type: string }
+                            status: { type: string }
+                            updated_at: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /system-status:
+    get:
+      tags: [Pengguna]
+      summary: Pemeriksaan teknis read-only khusus System Admin
+      description: Menguji koneksi database saat diminta. Tidak menampilkan kredensial, tidak mengukur uptime, dan tidak mengubah konfigurasi.
+      responses:
+        '200':
+          description: Koneksi database berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      database: { type: string, enum: [connected] }
+                      database_driver: { type: string }
+                      php_version: { type: string }
+                      laravel_version: { type: string }
+                      checked_at: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
   /auth/login:
     post:
       tags: [Authentication]
@@ -68,6 +148,78 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/SuccessMessage' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
+  /users:
+    get:
+      tags: [Pengguna]
+      summary: Daftar pengguna sesuai kewenangan pengelola
+      description: System Admin melihat seluruh akun; Admin SSDM hanya melihat akun Operator.
+      parameters:
+        - { name: search, in: query, schema: { type: string, maxLength: 100 }, description: Nama atau email }
+        - { name: role, in: query, schema: { $ref: '#/components/schemas/UserRole' } }
+        - { name: status, in: query, schema: { type: string, enum: [active, inactive] } }
+        - { name: sort, in: query, schema: { type: string, enum: [name, email, role, created_at], default: name } }
+        - { name: direction, in: query, schema: { type: string, enum: [asc, desc], default: asc } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 15 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Halaman pengguna
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/UserPage' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Pengguna]
+      summary: Membuat pengguna beserta role dan scope
+      description: Admin SSDM hanya dapat membuat Operator. Akun global tidak memiliki scope; Operator wajib memiliki minimal satu scope aktif.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/UserCreate' } }
+      responses:
+        '201':
+          description: Pengguna dibuat
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/UserEnvelope' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /users/{user}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Pengguna]
+      summary: Detail pengguna dan seluruh scope
+      responses:
+        '200':
+          description: Detail pengguna
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/UserEnvelope' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Pengguna]
+      summary: Memperbarui akun, role, status, dan mengganti kumpulan scope
+      description: Pengguna tidak dapat mengubah akun sendiri. Password opsional; kirim kosong jika tidak diubah.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/UserUpdate' } }
+      responses:
+        '200':
+          description: Pengguna diperbarui
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/UserEnvelope' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      tags: [Pengguna]
+      summary: Menonaktifkan pengguna dan mencabut seluruh token
+      description: Data akun tidak dihapus permanen. Akun dapat diaktifkan kembali melalui endpoint update.
+      responses:
+        '200': { $ref: '#/components/responses/SuccessMessage' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /reference-options:
     get:
       tags: [Referensi]
@@ -89,6 +241,90 @@ paths:
                       jenis_kualifikasi: { type: array, items: { $ref: '#/components/schemas/ReferenceItem' } }
                       jenis_penugasan: { type: array, items: { $ref: '#/components/schemas/ReferenceItem' } }
         '401': { $ref: '#/components/responses/Unauthenticated' }
+  /references/{type}:
+    parameters:
+      - $ref: '#/components/parameters/ReferenceType'
+    get:
+      tags: [Administrasi Referensi]
+      summary: Daftar referensi; unit organisasi dibatasi scope Operator
+      parameters:
+        - { name: search, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: status, in: query, schema: { type: string, enum: [active, inactive] } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 15 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Daftar referensi dengan data, links, meta pagination, success, dan message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/ReferenceRecord' } }
+                  links: { type: object }
+                  meta: { type: object }
+                  success: { type: boolean }
+                  message: { type: string }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [Administrasi Referensi]
+      summary: Tambah referensi oleh System Admin atau Admin SSDM
+      description: Kolom khusus harus sesuai type URL. Unit non-root wajib memiliki induk; root tidak boleh memiliki induk. Unit aktif wajib berada di bawah induk aktif.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ReferenceWrite' } }
+      responses:
+        '201':
+          description: Referensi dibuat
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ReferenceEnvelope' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /references/{type}/{reference}:
+    parameters:
+      - $ref: '#/components/parameters/ReferenceType'
+      - { name: reference, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      tags: [Administrasi Referensi]
+      summary: Detail referensi; unit di luar scope Operator ditolak
+      responses:
+        '200':
+          description: Detail referensi
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ReferenceEnvelope' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Administrasi Referensi]
+      summary: Perbarui atau aktifkan/nonaktifkan referensi
+      description: Kirim seluruh kolom wajib sesuai type. Siklus induk unit ditolak. Nonaktifkan bawahan aktif sebelum induk. Jenis personel pada pangkat yang sudah dipakai tidak dapat diganti.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ReferenceWrite' } }
+      responses:
+        '200':
+          description: Referensi diperbarui
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ReferenceEnvelope' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      tags: [Administrasi Referensi]
+      summary: Soft delete referensi yang belum digunakan
+      description: Referensi yang masih dipakai personel, riwayat termasuk soft-deleted, scope, atau unit anak ditolak dengan 409. Gunakan status nonaktif untuk menghentikan penggunaan baru. Kode tetap unik setelah soft delete.
+      responses:
+        '200': { $ref: '#/components/responses/SuccessMessage' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /personel:
     get:
       tags: [Personel]
@@ -99,11 +335,17 @@ paths:
         - { name: pangkat_id, in: query, schema: { type: integer } }
         - { name: bidang_fungsi_id, in: query, schema: { type: integer } }
         - { name: jenis_kualifikasi_id, in: query, schema: { type: integer } }
+        - { name: operasi_wilayah, in: query, schema: { type: string, maxLength: 255 } }
+        - { name: operasi_tingkat, in: query, schema: { $ref: '#/components/schemas/MeritLevel' } }
+        - { name: operasi_bidang_fungsi_id, in: query, schema: { type: integer } }
+        - { name: operasi_verifikasi, in: query, schema: { $ref: '#/components/schemas/MeritVerification' } }
+        - { name: min_jumlah_operasi, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: min_durasi_operasi_hari, in: query, schema: { type: integer, minimum: 1 }, description: Akumulasi hari per operasi; periode yang beririsan dapat terhitung pada dua operasi. }
         - { name: jenis_personel, in: query, schema: { $ref: '#/components/schemas/JenisPersonel' } }
         - { name: status, in: query, schema: { $ref: '#/components/schemas/StatusPersonel' } }
         - name: sort
           in: query
-          schema: { type: string, enum: [nama, pangkat, terbaru, jumlah_kualifikasi, durasi_pengalaman, kualifikasi_terbaru], default: nama }
+          schema: { type: string, enum: [nama, pangkat, terbaru, jumlah_kualifikasi, durasi_pengalaman, kualifikasi_terbaru, jumlah_operasi, durasi_operasi], default: nama }
         - { name: direction, in: query, schema: { type: string, enum: [asc, desc] } }
         - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 10 } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
@@ -221,14 +463,29 @@ paths:
   /kualifikasi/{kualifikasi}:
     parameters:
       - $ref: '#/components/parameters/KualifikasiId'
+    get:
+      tags: [Kualifikasi]
+      summary: Detail kualifikasi lengkap untuk membaca atau mengisi form edit
+      responses:
+        '200':
+          description: Detail kualifikasi
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KualifikasiEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
     put:
       tags: [Kualifikasi]
       summary: Ubah kualifikasi
+      description: Field yang tidak dikirim dipertahankan, null mengosongkan field opsional. Untuk upload PDF gunakan POST ke URL ini dengan form field _method=PUT (method override); ini diperlukan pada PHP 8.3. hapus_dokumen=true melepas PDF lama; PDF baru menggantikannya.
       requestBody:
         required: true
         content:
           multipart/form-data:
-            schema: { $ref: '#/components/schemas/KualifikasiInput' }
+            schema: { $ref: '#/components/schemas/KualifikasiUpdate' }
+          application/json:
+            schema: { $ref: '#/components/schemas/KualifikasiUpdate' }
       responses:
         '200':
           description: Kualifikasi diperbarui
@@ -240,7 +497,7 @@ paths:
         '422': { $ref: '#/components/responses/ValidationError' }
     delete:
       tags: [Kualifikasi]
-      summary: Soft delete kualifikasi dan bersihkan dokumennya
+      summary: Soft delete kualifikasi (dokumen tetap disimpan untuk arsip)
       responses:
         '200': { $ref: '#/components/responses/SuccessMessage' }
         '403': { $ref: '#/components/responses/Forbidden' }
@@ -291,14 +548,29 @@ paths:
   /riwayat-jabatan/{riwayatJabatan}:
     parameters:
       - $ref: '#/components/parameters/RiwayatJabatanId'
+    get:
+      tags: [Riwayat Jabatan]
+      summary: Detail riwayat jabatan lengkap untuk membaca atau mengisi form edit
+      responses:
+        '200':
+          description: Detail riwayat jabatan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RiwayatJabatanEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
     put:
       tags: [Riwayat Jabatan]
       summary: Ubah riwayat jabatan
+      description: is_jabatan_utama tidak dapat diubah. Jabatan utama aktif tidak dapat diakhiri atau diubah unitnya melalui CRUD. Field yang tidak dikirim dipertahankan. Untuk upload PDF gunakan POST dengan _method=PUT; untuk melepas PDF kirim hapus_dokumen=true.
       requestBody:
         required: true
         content:
           multipart/form-data:
-            schema: { $ref: '#/components/schemas/RiwayatJabatanInput' }
+            schema: { $ref: '#/components/schemas/RiwayatJabatanUpdate' }
+          application/json:
+            schema: { $ref: '#/components/schemas/RiwayatJabatanUpdate' }
       responses:
         '200':
           description: Riwayat diperbarui
@@ -308,7 +580,7 @@ paths:
         '422': { $ref: '#/components/responses/ValidationError' }
     delete:
       tags: [Riwayat Jabatan]
-      summary: Soft delete riwayat jabatan selesai
+      summary: Soft delete riwayat selesai atau penugasan tambahan
       description: Jabatan utama aktif ditolak dengan HTTP 409.
       responses:
         '200': { $ref: '#/components/responses/SuccessMessage' }
@@ -372,6 +644,98 @@ paths:
               schema: { $ref: '#/components/schemas/PersonelEnvelope' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationError' }
+  /personel/{personel}/merit/{type}:
+    parameters:
+      - $ref: '#/components/parameters/PersonelId'
+      - $ref: '#/components/parameters/MeritType'
+    get:
+      tags: [Profil Merit]
+      summary: Daftar berhalaman penugasan operasi, prestasi, atau penghargaan dalam scope personel
+      parameters:
+        - { name: wilayah, in: query, schema: { type: string } }
+        - { name: tingkat, in: query, schema: { $ref: '#/components/schemas/MeritLevel' } }
+        - { name: bidang_fungsi_id, in: query, schema: { type: integer } }
+        - { name: kategori, in: query, schema: { type: string }, description: Hanya berlaku untuk prestasi }
+        - { name: status_verifikasi, in: query, schema: { $ref: '#/components/schemas/MeritVerification' } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Halaman riwayat merit, content: { application/json: { schema: { $ref: '#/components/schemas/MeritPage' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Profil Merit]
+      summary: Tambah satu fakta merit dengan PDF opsional
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/MeritInput' } }
+          multipart/form-data: { schema: { $ref: '#/components/schemas/MeritInput' } }
+      responses:
+        '201': { description: Dibuat dan belum diverifikasi, content: { application/json: { schema: { $ref: '#/components/schemas/MeritEnvelope' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /merit/{type}/{record}:
+    parameters:
+      - $ref: '#/components/parameters/MeritType'
+      - $ref: '#/components/parameters/MeritId'
+    get:
+      tags: [Profil Merit]
+      summary: Detail satu fakta merit
+      responses:
+        '200': { description: Detail, content: { application/json: { schema: { $ref: '#/components/schemas/MeritEnvelope' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Profil Merit]
+      summary: Edit data; perubahan membatalkan verifikasi
+      description: Untuk upload PDF dari PHP 8.3 gunakan POST multipart dengan _method=PUT. Hanya field yang dikirim diperbarui.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/MeritInput' } }
+          multipart/form-data: { schema: { $ref: '#/components/schemas/MeritInput' } }
+      responses:
+        '200': { description: Diperbarui, content: { application/json: { schema: { $ref: '#/components/schemas/MeritEnvelope' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      tags: [Profil Merit]
+      summary: Arsipkan riwayat secara soft delete tanpa menghapus PDF
+      responses:
+        '200': { $ref: '#/components/responses/SuccessMessage' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /merit/{type}/{record}/verifikasi:
+    parameters:
+      - $ref: '#/components/parameters/MeritType'
+      - $ref: '#/components/parameters/MeritId'
+    post:
+      tags: [Profil Merit]
+      summary: Verifikasi atau batalkan oleh Admin SSDM/System Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status_verifikasi]
+              properties:
+                status_verifikasi: { $ref: '#/components/schemas/MeritVerification' }
+      responses:
+        '200': { description: Status diperbarui, content: { application/json: { schema: { $ref: '#/components/schemas/MeritEnvelope' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /merit/{type}/{record}/dokumen:
+    parameters:
+      - $ref: '#/components/parameters/MeritType'
+      - $ref: '#/components/parameters/MeritId'
+    get:
+      tags: [Profil Merit]
+      summary: Unduh PDF privat setelah pemeriksaan scope
+      responses:
+        '200': { description: PDF attachment, content: { application/pdf: { schema: { type: string, format: binary } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   securitySchemes:
     bearerAuth:
@@ -379,9 +743,17 @@ components:
       scheme: bearer
       bearerFormat: Sanctum token
   parameters:
+    ReferenceType:
+      name: type
+      in: path
+      required: true
+      schema: { type: string, enum: [unit-organisasi, pangkat, bidang-fungsi, jenis-kualifikasi, jenis-penugasan] }
+    UserId: { name: user, in: path, required: true, schema: { type: integer, minimum: 1 } }
     PersonelId: { name: personel, in: path, required: true, schema: { type: integer, minimum: 1 } }
     KualifikasiId: { name: kualifikasi, in: path, required: true, schema: { type: integer, minimum: 1 } }
     RiwayatJabatanId: { name: riwayatJabatan, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    MeritType: { name: type, in: path, required: true, schema: { type: string, enum: [penugasan-operasi, prestasi, penghargaan] } }
+    MeritId: { name: record, in: path, required: true, schema: { type: integer, minimum: 1 } }
   responses:
     SuccessMessage:
       description: Operasi berhasil
@@ -389,7 +761,9 @@ components:
         application/json:
           schema:
             type: object
+            required: [success, message]
             properties:
+              success: { type: boolean, const: true }
               message: { type: string }
     Unauthenticated:
       description: Token tidak ada atau tidak valid
@@ -415,7 +789,38 @@ components:
       description: Rate limit terlampaui
       content:
         application/json: { schema: { $ref: '#/components/schemas/Error' } }
+    ServiceUnavailable:
+      description: Layanan tidak tersedia; detail internal tidak dibocorkan
+      content:
+        application/json: { schema: { $ref: '#/components/schemas/Error' } }
   schemas:
+    ReferenceWrite:
+      type: object
+      required: [kode, nama, is_active]
+      description: "Kolom tambahan sesuai URL: unit-organisasi wajib jenis_unit, parent_id kecuali root; pangkat wajib jenis_personel dan urutan; bidang-fungsi memiliki deskripsi opsional. Kolom khusus kategori lain ditolak. Panjang kode maksimal unit/jenis-kualifikasi 50, pangkat/bidang-fungsi 30, jenis-penugasan 20."
+      properties:
+        kode: { type: string, maxLength: 50 }
+        nama: { type: string, maxLength: 255 }
+        is_active: { type: boolean }
+        parent_id: { type: [integer, 'null'] }
+        jenis_unit: { type: string, enum: [root, mabes, satker_mabes, polda, satker_polda, polres, satker_polres, polsek] }
+        jenis_personel: { $ref: '#/components/schemas/JenisPersonel' }
+        urutan: { type: integer, minimum: 0, maximum: 65535 }
+        deskripsi: { type: [string, 'null'], maxLength: 2000 }
+    ReferenceRecord:
+      allOf:
+        - $ref: '#/components/schemas/ReferenceWrite'
+        - type: object
+          properties:
+            id: { type: integer }
+            jenis_unit_label: { type: string }
+            parent: { oneOf: [{ $ref: '#/components/schemas/ReferenceItem' }, { type: 'null' }] }
+    ReferenceEnvelope:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data: { $ref: '#/components/schemas/ReferenceRecord' }
     LoginRequest:
       type: object
       required: [email, password]
@@ -430,15 +835,76 @@ components:
       properties:
         id: { type: integer }
         nama: { type: string }
+    UserRole: { type: string, enum: [system_admin, admin_ssdm, operator] }
+    ScopeType: { type: string, enum: [own_unit, unit_and_descendants] }
+    UserScopeInput:
+      type: object
+      required: [unit_organisasi_id, scope_type, is_active]
+      properties:
+        unit_organisasi_id: { type: integer }
+        scope_type: { $ref: '#/components/schemas/ScopeType' }
+        is_active: { type: boolean }
+        berlaku_mulai: { type: [string, 'null'], format: date }
+        berlaku_sampai: { type: [string, 'null'], format: date }
+    UserCreate:
+      type: object
+      required: [name, email, password, password_confirmation, role, is_active]
+      properties:
+        name: { type: string, maxLength: 255 }
+        email: { type: string, format: email, maxLength: 255 }
+        password: { type: string, format: password, minLength: 10 }
+        password_confirmation: { type: string, format: password }
+        role: { $ref: '#/components/schemas/UserRole' }
+        is_active: { type: boolean }
+        scopes: { type: array, items: { $ref: '#/components/schemas/UserScopeInput' } }
+    UserUpdate:
+      type: object
+      required: [name, email, role, is_active]
+      properties:
+        name: { type: string, maxLength: 255 }
+        email: { type: string, format: email, maxLength: 255 }
+        password: { type: [string, 'null'], format: password, minLength: 10 }
+        password_confirmation: { type: [string, 'null'], format: password }
+        role: { $ref: '#/components/schemas/UserRole' }
+        is_active: { type: boolean }
+        scopes: { type: array, items: { $ref: '#/components/schemas/UserScopeInput' } }
+    UserScope:
+      allOf:
+        - $ref: '#/components/schemas/UserScopeInput'
+        - type: object
+          properties:
+            id: { type: integer }
+            scope_type_label: { type: string }
+            unit_organisasi: { $ref: '#/components/schemas/ReferenceItem' }
     User:
       type: object
       properties:
         id: { type: integer }
         name: { type: string }
         email: { type: string, format: email }
-        role: { type: string, enum: [system_admin, admin_ssdm, operator] }
+        role: { $ref: '#/components/schemas/UserRole' }
+        role_label: { type: string }
         is_active: { type: boolean }
-        scopes: { type: array, items: { type: object } }
+        scopes: { type: array, items: { $ref: '#/components/schemas/UserScope' } }
+        permissions:
+          type: object
+          description: Hanya dikirim pada login dan auth/me; dihitung melalui policy backend.
+          properties:
+            create_personnel: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    UserEnvelope:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data: { $ref: '#/components/schemas/User' }
+    UserPage:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/User' } }
+        links: { type: object }
+        meta: { type: object }
     PersonelCreate:
       type: object
       required: [jenis_personel, nomor_identitas, nama_lengkap, pangkat_id, tempat_lahir, tanggal_lahir, unit_organisasi_id, status]
@@ -485,6 +951,11 @@ components:
             riwayat_jabatan: { type: array, items: { $ref: '#/components/schemas/RiwayatJabatan' } }
             jumlah_kualifikasi_relevan: { type: integer, description: "Fakta, bukan skor merit." }
             durasi_pengalaman_relevan_hari: { type: integer, description: "Fakta, bukan skor merit." }
+            ringkasan_operasi:
+              type: object
+              properties:
+                jumlah: { type: integer }
+                total_durasi_hari: { type: integer, description: Hari kumulatif per operasi; bukan durasi kalender unik maupun skor. }
     PersonelEnvelope:
       type: object
       properties:
@@ -494,6 +965,61 @@ components:
       type: object
       properties:
         data: { type: array, items: { $ref: '#/components/schemas/Personel' } }
+        links: { type: object }
+        meta: { type: object }
+    MeritLevel: { type: string, enum: [satker, kabupaten_kota, provinsi, nasional, internasional] }
+    MeritVerification: { type: string, enum: [belum_diverifikasi, terverifikasi] }
+    MeritInput:
+      type: object
+      description: Properti nama dan tingkat wajib pada create. Properti lain bergantung pada jenis. Verifikasi/aktor/personel tidak boleh dikirim.
+      properties:
+        nama: { type: string, maxLength: 255 }
+        tingkat: { $ref: '#/components/schemas/MeritLevel' }
+        bidang_fungsi_id: { type: [integer, 'null'] }
+        keterangan: { type: [string, 'null'], maxLength: 1000 }
+        kode_operasi: { type: [string, 'null'], maxLength: 100 }
+        jenis_operasi: { type: string, maxLength: 100 }
+        wilayah: { type: string, maxLength: 255 }
+        peran: { type: string, maxLength: 255, description: Peran operasi atau individu/tim prestasi }
+        satgas_unit: { type: string, maxLength: 255 }
+        tanggal_mulai: { type: string, format: date }
+        tanggal_selesai: { type: [string, 'null'], format: date }
+        nomor_surat_perintah: { type: [string, 'null'], maxLength: 100 }
+        kategori: { type: string, enum: [olahraga, akademik, operasional, inovasi, pelayanan, lainnya] }
+        hasil: { type: string }
+        penyelenggara: { type: string }
+        tanggal: { type: [string, 'null'], format: date }
+        tahun: { type: integer, minimum: 1900 }
+        pemberi: { type: string }
+        nomor_keputusan: { type: [string, 'null'] }
+        tanggal_keputusan: { type: string, format: date }
+        alasan: { type: string, maxLength: 1000 }
+        dokumen: { type: string, format: binary, description: PDF konten dan ekstensi; maksimal 5 MB. }
+        hapus_dokumen: { type: boolean, description: Khusus update. }
+    MeritRecord:
+      type: object
+      properties:
+        id: { type: integer }
+        personel_id: { type: integer }
+        nama: { type: string }
+        tingkat: { $ref: '#/components/schemas/MeritLevel' }
+        bidang_fungsi: { oneOf: [{ $ref: '#/components/schemas/ReferenceItem' }, { type: 'null' }] }
+        status_verifikasi: { $ref: '#/components/schemas/MeritVerification' }
+        verified_by: { type: [object, 'null'], properties: { id: { type: integer }, nama: { type: string } } }
+        verified_at: { type: [string, 'null'], format: date-time }
+        dokumen: { $ref: '#/components/schemas/PrivateDocument' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      description: Ditambah field sesuai jenis dari MeritInput, kecuali path internal, verifikasi pada input, dan kontrol hapus dokumen.
+    MeritEnvelope:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/MeritRecord' }
+        message: { type: string }
+    MeritPage:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/MeritRecord' } }
         links: { type: object }
         meta: { type: object }
     KualifikasiInput:
@@ -511,16 +1037,49 @@ components:
         tahun: { type: [integer, 'null'], minimum: 1900 }
         nomor_dokumen: { type: [string, 'null'], maxLength: 100 }
         keterangan: { type: [string, 'null'], maxLength: 1000 }
-        dokumen_pendukung: { type: [string, 'null'], format: binary, description: PDF maksimal 5 MB. }
+        dokumen_pendukung: { type: [string, 'null'], format: binary, description: Konten dan ekstensi PDF; maksimal 5 MB. }
+    KualifikasiUpdate:
+      type: object
+      properties:
+        jenis_kualifikasi_id: { $ref: '#/components/schemas/KualifikasiInput/properties/jenis_kualifikasi_id' }
+        bidang_fungsi_id: { $ref: '#/components/schemas/KualifikasiInput/properties/bidang_fungsi_id' }
+        nama_kualifikasi: { $ref: '#/components/schemas/KualifikasiInput/properties/nama_kualifikasi' }
+        jenjang: { $ref: '#/components/schemas/KualifikasiInput/properties/jenjang' }
+        bidang_studi: { $ref: '#/components/schemas/KualifikasiInput/properties/bidang_studi' }
+        institusi_penyelenggara: { $ref: '#/components/schemas/KualifikasiInput/properties/institusi_penyelenggara' }
+        tanggal_mulai: { $ref: '#/components/schemas/KualifikasiInput/properties/tanggal_mulai' }
+        tanggal_selesai: { $ref: '#/components/schemas/KualifikasiInput/properties/tanggal_selesai' }
+        tahun: { $ref: '#/components/schemas/KualifikasiInput/properties/tahun' }
+        nomor_dokumen: { $ref: '#/components/schemas/KualifikasiInput/properties/nomor_dokumen' }
+        keterangan: { $ref: '#/components/schemas/KualifikasiInput/properties/keterangan' }
+        dokumen_pendukung: { $ref: '#/components/schemas/KualifikasiInput/properties/dokumen_pendukung' }
+        hapus_dokumen: { type: boolean }
+    PrivateDocument:
+      type: [object, 'null']
+      properties:
+        nama_asli: { type: string }
+        mime: { type: string }
+        ukuran: { type: integer, description: Ukuran byte }
+        download_url: { type: string, format: uri, description: Endpoint berizin; memerlukan header Bearer token. Bukan URL publik. }
     Kualifikasi:
-      allOf:
-        - $ref: '#/components/schemas/KualifikasiInput'
-        - type: object
-          properties:
-            id: { type: integer }
-            jenis_kualifikasi: { $ref: '#/components/schemas/ReferenceItem' }
-            bidang_fungsi: { oneOf: [{ $ref: '#/components/schemas/ReferenceItem' }, { type: 'null' }] }
-            memiliki_dokumen: { type: boolean }
+      type: object
+      properties:
+        id: { type: integer }
+        personel_id: { type: integer }
+        jenis_kualifikasi: { $ref: '#/components/schemas/ReferenceItem' }
+        bidang_fungsi: { oneOf: [{ $ref: '#/components/schemas/ReferenceItem' }, { type: 'null' }] }
+        nama_kualifikasi: { type: string }
+        jenjang: { type: [string, 'null'] }
+        bidang_studi: { type: [string, 'null'] }
+        institusi_penyelenggara: { type: [string, 'null'] }
+        tanggal_mulai: { type: [string, 'null'], format: date }
+        tanggal_selesai: { type: [string, 'null'], format: date }
+        tahun: { type: [integer, 'null'] }
+        nomor_dokumen: { type: [string, 'null'] }
+        keterangan: { type: [string, 'null'] }
+        dokumen: { $ref: '#/components/schemas/PrivateDocument' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
     KualifikasiEnvelope:
       type: object
       properties:
@@ -539,17 +1098,37 @@ components:
         nivelering: { type: [string, 'null'], maxLength: 50 }
         is_jabatan_utama: { type: boolean }
         keterangan: { type: [string, 'null'], maxLength: 1000 }
-        dokumen_sk: { type: [string, 'null'], format: binary, description: PDF maksimal 5 MB. }
+        dokumen_sk: { type: [string, 'null'], format: binary, description: Konten dan ekstensi PDF; maksimal 5 MB. }
+    RiwayatJabatanUpdate:
+      type: object
+      properties:
+        nama_jabatan: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/nama_jabatan' }
+        unit_organisasi_id: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/unit_organisasi_id' }
+        bidang_fungsi_id: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/bidang_fungsi_id' }
+        jenis_penugasan_id: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/jenis_penugasan_id' }
+        tanggal_mulai: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/tanggal_mulai' }
+        tanggal_selesai: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/tanggal_selesai' }
+        nivelering: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/nivelering' }
+        keterangan: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/keterangan' }
+        dokumen_sk: { $ref: '#/components/schemas/RiwayatJabatanInput/properties/dokumen_sk' }
+        hapus_dokumen: { type: boolean }
     RiwayatJabatan:
-      allOf:
-        - $ref: '#/components/schemas/RiwayatJabatanInput'
-        - type: object
-          properties:
-            id: { type: integer }
-            unit_organisasi: { $ref: '#/components/schemas/ReferenceItem' }
-            bidang_fungsi: { $ref: '#/components/schemas/ReferenceItem' }
-            jenis_penugasan: { $ref: '#/components/schemas/ReferenceItem' }
-            memiliki_dokumen: { type: boolean }
+      type: object
+      properties:
+        id: { type: integer }
+        personel_id: { type: integer }
+        nama_jabatan: { type: string }
+        unit_organisasi: { $ref: '#/components/schemas/ReferenceItem' }
+        bidang_fungsi: { $ref: '#/components/schemas/ReferenceItem' }
+        jenis_penugasan: { $ref: '#/components/schemas/ReferenceItem' }
+        is_jabatan_utama: { type: boolean }
+        tanggal_mulai: { type: string, format: date }
+        tanggal_selesai: { type: [string, 'null'], format: date }
+        nivelering: { type: [string, 'null'] }
+        keterangan: { type: [string, 'null'] }
+        dokumen: { $ref: '#/components/schemas/PrivateDocument' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
     RiwayatJabatanEnvelope:
       type: object
       properties:
@@ -568,8 +1147,9 @@ components:
         dokumen_sk: { type: [string, 'null'], format: binary, description: PDF maksimal 5 MB. }
     Error:
       type: object
-      required: [message]
+      required: [success, message]
       properties:
+        success: { type: boolean, const: false }
         message: { type: string }
     ValidationError:
       allOf:

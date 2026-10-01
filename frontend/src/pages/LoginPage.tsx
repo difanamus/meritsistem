@@ -17,7 +17,7 @@ export function LoginPage() {
     document.title = 'Masuk · Merit SDM POLRI'
   }, [])
 
-  if (user) return <Navigate to="/personel" replace />
+  if (user) return <Navigate to="/dashboard" replace />
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -25,7 +25,7 @@ export function LoginPage() {
     setSubmitting(true)
     try {
       await login(email, password)
-      navigate('/personel', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (exception) {
       setError(exception instanceof ApiError ? exception.message : 'Tidak dapat terhubung ke server.')
     } finally {

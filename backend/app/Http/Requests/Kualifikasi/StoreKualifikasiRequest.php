@@ -35,7 +35,7 @@ class StoreKualifikasiRequest extends FormRequest
             'tahun' => ['nullable', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
             'nomor_dokumen' => ['nullable', 'string', 'max:100'],
             'keterangan' => ['nullable', 'string', 'max:1000'],
-            'dokumen_pendukung' => ['nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:5120'],
+            'dokumen_pendukung' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:5120'],
         ];
     }
 }

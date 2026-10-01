@@ -35,6 +35,13 @@ class PersonelResource extends JsonResource
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'jumlah_kualifikasi' => $this->whenCounted('kualifikasi'),
+            'ringkasan_operasi' => $this->when(
+                $this->resource->getAttribute('jumlah_operasi') !== null,
+                fn () => [
+                    'jumlah' => (int) $this->resource->getAttribute('jumlah_operasi'),
+                    'total_durasi_hari' => (int) $this->resource->getAttribute('durasi_operasi_hari'),
+                ],
+            ),
             'ringkasan_relevan' => $this->when(
                 $this->resource->getAttribute('jumlah_kualifikasi_relevan') !== null,
                 fn () => [

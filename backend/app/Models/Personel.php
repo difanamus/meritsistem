@@ -52,6 +52,21 @@ class Personel extends Model
         return $this->hasMany(RiwayatJabatan::class);
     }
 
+    public function penugasanOperasi(): HasMany
+    {
+        return $this->hasMany(PenugasanOperasi::class);
+    }
+
+    public function prestasi(): HasMany
+    {
+        return $this->hasMany(PrestasiPersonel::class);
+    }
+
+    public function penghargaan(): HasMany
+    {
+        return $this->hasMany(PenghargaanPersonel::class);
+    }
+
     public function jabatanUtamaAktif(): HasOne
     {
         return $this->hasOne(RiwayatJabatan::class)

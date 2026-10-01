@@ -2,7 +2,19 @@
 
 Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah implementasi atau verifikasi benar-benar selesai.
 
+Checkpoint Point 1: CRUD pengguna, role, dan scope telah diimplementasikan pada API dan UI. Pengujian mencakup pembatasan role, larangan perubahan akun sendiri, validasi scope, deaktivasi/pencabutan token, dan aktivasi ulang. QA browser memeriksa daftar/form System Admin serta penolakan URL administrasi untuk Operator; checklist QA lintas-modul tetap menunggu tahap QA keseluruhan.
+
+Checkpoint Point 2: CRUD lima kategori referensi selesai pada API/UI, dengan validasi induk dan siklus hierarki, pembatasan Operator menjadi read-only, serta penolakan penghapusan referensi yang masih dipakai (409). Sebanyak 82 test / 358 assertion lulus di SQLite dan PostgreSQL. Lint/build frontend serta validasi dokumen OpenAPI/Postman lulus. Browser memverifikasi tambah/edit referensi demo nonaktif (DEMO-POINT2), pilihan induk unit, serta Operator Polres hanya melihat empat unit dalam scope tanpa tombol perubahan. QA keseluruhan proyek tetap dikerjakan pada tahap terpisah.
+
 ## A. Requirement dan Perencanaan
+
+Checkpoint Point 3: dashboard faktual berbasis role/scope, navigasi ruang kerja/administrasi, redirect login ke dashboard, dan monitoring teknis read-only khusus System Admin selesai. Operator tanpa scope aktif mendapatkan ringkasan kosong dan tidak mendapat tombol tambah personel. Seluruh 88 test / 404 assertion lulus di SQLite dan PostgreSQL 17; lint/build frontend lulus. Browser memverifikasi dashboard System Admin, Admin SSDM, Operator Intelkam, serta penolakan URL teknis untuk Admin SSDM.
+
+Checkpoint Point 4: UI CRUD kualifikasi dan riwayat jabatan selesai, termasuk pagination, metadata lengkap, PDF opsional (tambah/ganti/hapus lampiran), download berizin, konfirmasi soft delete, serta perlindungan jabatan utama aktif melalui proses ganti jabatan/mutasi. Profil menampilkan penugasan tambahan aktif dan menyediakan arsip personel; restore belum tersedia. Seluruh 106 test / 495 assertion lulus di SQLite dan PostgreSQL 17; 11 test frontend, lint, build, serta validasi OpenAPI/Postman lulus. Browser memverifikasi tambah tanpa PDF, edit dan pengosongan metadata, upload PDF kualifikasi/SK, penyelesaian penugasan tambahan, pembatalan dan konfirmasi hapus. Klik download tidak menampilkan error, tetapi event unduhan blob tidak tersedia pada browser pengujian; kontrak download dan authorization diverifikasi lewat test. Kendala upload lokal diperbaiki melalui direktori sementara PHP yang writable dan didokumentasikan di README. Data QA fiktif diarsipkan tanpa mengubah personel demo awal.
+
+Checkpoint Point 5: penugasan operasi, prestasi, dan penghargaan resmi terpisah telah tersedia di API dan profil. Setiap modul mendukung CRUD dalam scope, PDF privat opsional, verifikasi Admin SSDM/System Admin, pembatalan verifikasi ketika fakta berubah, dan soft delete. Daftar personel mendukung filter operasi dan urut jumlah/durasi kumulatif tanpa skor merit. Seluruh 117 test / 625 assertion backend lulus di SQLite dan PostgreSQL 17; 11 test frontend, lint, build, parsing OpenAPI/Postman, dan format Pint lulus. Browser memverifikasi tambah operasi tanpa PDF, verifikasi, edit dengan PDF yang membatalkan verifikasi, filter wilayah Papua (1 operasi, 90 hari), lalu mengarsipkan record QA tanpa mengubah data demo awal. QA menyeluruh proyek dan video presentasi tetap pada tahap berikutnya.
+
+Checkpoint Point 6: kontrak respons API sukses/error dirapikan, termasuk 401 tanpa header JSON, 403, 404, 405, 422, 429, dan 500 tanpa bocoran detail internal. CORS kini terbatas pada origin frontend lokal yang dapat dikonfigurasi. Smoke QA browser mencakup System Admin, Admin SSDM, Operator Polda, Operator Polres, akses di luar scope, dan hasil pencarian kosong; tidak ada error konsol browser. Seluruh 126 test / 668 assertion backend lulus di SQLite dan PostgreSQL 17; 11 test frontend, lint, build, Pint, serta 249 referensi lokal OpenAPI lulus. Database lokal memiliki satu personel tambahan non-seed yang dibiarkan utuh. Uji setup/clone bersih, seluruh request Postman, Git publik, dan video tetap tahap berikutnya.
 
 - [x] Membaca `Paparan Uji Pemrograman.pdf` secara lengkap.
 - [x] Membaca `Soal CRUD.pdf` secara lengkap.
@@ -60,10 +72,10 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Membuat endpoint logout/revoke token.
 - [x] Membuat endpoint profil pengguna saat ini.
 - [x] Membatasi login akun nonaktif.
-- [ ] Mencabut token saat akun dinonaktifkan.
-- [ ] Membuat CRUD pengguna sesuai permission.
-- [ ] Membuat assignment role, unit, dan scope pengguna.
-- [ ] Mencegah pengguna menaikkan role atau mengubah scope sendiri.
+- [x] Mencabut token saat akun dinonaktifkan.
+- [x] Membuat CRUD pengguna sesuai permission.
+- [x] Membuat assignment role, unit, dan scope pengguna.
+- [x] Mencegah pengguna menaikkan role atau mengubah scope sendiri.
 - [x] Membuat test authentication berhasil/gagal.
 
 ## E. Authorization dan Organizational Scope
@@ -83,13 +95,13 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## F. CRUD Data Referensi
 
-- [ ] CRUD unit organisasi untuk pengguna berwenang.
-- [ ] Validasi parent dan pencegahan hierarchy cycle.
-- [ ] CRUD pangkat.
-- [ ] CRUD bidang/fungsi.
-- [ ] CRUD jenis kualifikasi.
-- [ ] CRUD jenis penugasan.
-- [ ] Membatasi Operator biasa menjadi read-only terhadap referensi.
+- [x] CRUD unit organisasi untuk pengguna berwenang.
+- [x] Validasi parent dan pencegahan hierarchy cycle.
+- [x] CRUD pangkat.
+- [x] CRUD bidang/fungsi.
+- [x] CRUD jenis kualifikasi.
+- [x] CRUD jenis penugasan.
+- [x] Membatasi Operator biasa menjadi read-only terhadap referensi.
 
 ## G. CRUD Personel
 
@@ -179,30 +191,30 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Menetapkan konsep prestasi personel sebagai data faktual terpisah.
 - [x] Membedakan prestasi dari penghargaan/tanda kehormatan resmi.
 - [x] Menetapkan penilaian kinerja, assessment resmi, dan disiplin final sebagai pengembangan lanjutan.
-- [ ] Membuat migration, model, factory, dan seeder penugasan operasi.
-- [ ] Membuat CRUD, authorization scope, dokumen privat, filter, dan test penugasan operasi.
-- [ ] Membuat UI riwayat penugasan operasi pada profil personel.
-- [ ] Membuat migration, model, factory, dan seeder prestasi personel.
-- [ ] Membuat CRUD, authorization scope, dokumen privat, filter, dan test prestasi personel.
-- [ ] Membuat UI prestasi pada profil personel.
-- [ ] Membuat migration, model, factory, dan seeder penghargaan personel.
-- [ ] Membuat CRUD, authorization scope, dokumen privat, dan test penghargaan personel.
-- [ ] Membuat UI penghargaan pada profil personel.
-- [ ] Memperbarui OpenAPI, Postman, ERD, README, dan materi presentasi untuk modul tambahan.
+- [x] Membuat migration, model, factory, dan seeder penugasan operasi.
+- [x] Membuat CRUD, authorization scope, dokumen privat, filter, dan test penugasan operasi.
+- [x] Membuat UI riwayat penugasan operasi pada profil personel.
+- [x] Membuat migration, model, factory, dan seeder prestasi personel.
+- [x] Membuat CRUD, authorization scope, dokumen privat, filter, dan test prestasi personel.
+- [x] Membuat UI prestasi pada profil personel.
+- [x] Membuat migration, model, factory, dan seeder penghargaan personel.
+- [x] Membuat CRUD, authorization scope, dokumen privat, dan test penghargaan personel.
+- [x] Membuat UI penghargaan pada profil personel.
+- [x] Memperbarui OpenAPI, Postman, ERD, README, dan narasi demo modul tambahan (video tetap tahap berikutnya).
 
 ## L. Error Handling dan API Quality
 
-- [ ] Menetapkan format respons sukses yang konsisten.
-- [ ] Menetapkan format validation error yang konsisten.
+- [x] Menetapkan format respons sukses yang konsisten.
+- [x] Menetapkan format validation error yang konsisten.
 - [x] Menangani 401.
 - [x] Menangani 403.
-- [ ] Menangani 404.
+- [x] Menangani 404.
 - [x] Menangani 409.
-- [ ] Menangani 422.
-- [ ] Menangani 500 tanpa membocorkan stack trace.
+- [x] Menangani 422.
+- [x] Menangani 500 tanpa membocorkan stack trace.
 - [x] Menambahkan API version prefix `/api/v1`.
 - [x] Menambahkan rate limiting yang sesuai.
-- [ ] Mengonfigurasi CORS untuk frontend lokal.
+- [x] Mengonfigurasi CORS untuk frontend lokal.
 
 ## M. Frontend
 
@@ -210,8 +222,8 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Membuat state/session authentication.
 - [x] Membuat halaman login.
 - [x] Membuat protected route.
-- [ ] Membuat layout dan navigasi berdasarkan permission untuk System Admin, Admin SSDM, dan Operator.
-- [ ] Membuat dashboard ringkas berbasis role dan cakupan akses.
+- [x] Membuat layout dan navigasi berdasarkan permission untuk System Admin, Admin SSDM, dan Operator.
+- [x] Membuat dashboard ringkas berbasis role dan cakupan akses.
 - [x] Membuat halaman daftar personel.
 - [x] Membuat search, filter, sorting, dan pagination UI.
 - [x] Membuat form tambah/edit personel.
@@ -220,17 +232,18 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Menampilkan penugasan tambahan aktif.
 - [x] Menampilkan kualifikasi.
 - [x] Menampilkan riwayat jabatan kronologis.
-- [ ] Membuat form CRUD kualifikasi.
-- [ ] Membuat upload/download dokumen kualifikasi.
-- [ ] Membuat form CRUD riwayat jabatan.
-- [ ] Membuat upload/download SK.
+- [x] Membuat form CRUD kualifikasi.
+- [x] Membuat upload/download dokumen kualifikasi.
+- [x] Membuat form CRUD riwayat jabatan.
+- [x] Membuat upload/download SK.
+- [x] Membuat konfirmasi soft delete personel, kualifikasi, dan riwayat jabatan pada UI.
 - [x] Membuat UI pergantian jabatan dan mutasi.
-- [ ] Membuat halaman pengguna dan scope untuk Admin.
-- [ ] Membuat halaman referensi minimum.
-- [ ] Membuat menu dan ruang kerja System Admin untuk pengguna, scope, referensi, dan monitoring sistem.
-- [ ] Membuat menu dan ruang kerja Admin SSDM untuk pengelolaan bisnis nasional.
-- [ ] Membuat menu Operator yang hanya menampilkan fitur dan aksi dalam kewenangan scope-nya.
-- [ ] Menyembunyikan tombol/aksi yang tidak diizinkan berdasarkan role, tanpa menggantikan policy backend.
+- [x] Membuat halaman pengguna dan scope untuk Admin.
+- [x] Membuat halaman referensi minimum.
+- [x] Membuat menu dan ruang kerja System Admin untuk pengguna, scope, referensi, dan monitoring sistem.
+- [x] Membuat menu dan ruang kerja Admin SSDM untuk pengelolaan bisnis nasional.
+- [x] Membuat menu Operator yang hanya menampilkan fitur dan aksi dalam kewenangan scope-nya.
+- [x] Menyembunyikan tombol/aksi yang tidak diizinkan berdasarkan role, tanpa menggantikan policy backend.
 - [x] Menampilkan validation error dari API secara jelas.
 - [x] Membuat halaman/state 401, 403, dan 404.
 - [x] Memastikan UI responsif dan layak untuk demo.
@@ -247,13 +260,13 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Memastikan test file security lulus.
 - [x] Memastikan test jabatan/mutasi transaction lulus.
 - [x] Memastikan test filter/sorting lulus.
-- [ ] Melakukan manual QA sebagai System Admin.
-- [ ] Melakukan manual QA sebagai Admin SSDM.
-- [ ] Melakukan manual QA sebagai Operator Polda.
-- [ ] Melakukan manual QA sebagai Operator Polres/Satker.
-- [ ] Menguji forbidden access dengan URL langsung.
-- [ ] Menguji aplikasi dengan data kosong.
-- [ ] Menguji aplikasi dengan seed data.
+- [x] Melakukan smoke QA sebagai System Admin.
+- [x] Melakukan smoke QA sebagai Admin SSDM.
+- [x] Melakukan smoke QA sebagai Operator Polda.
+- [x] Melakukan smoke QA sebagai Operator Polres/Satker.
+- [x] Menguji forbidden access dengan URL langsung.
+- [x] Menguji aplikasi dengan data kosong dan pencarian tanpa hasil.
+- [x] Menguji aplikasi dengan seed data.
 - [ ] Memperbaiki seluruh error blocker dan high-priority.
 
 ## O. Dokumentasi API

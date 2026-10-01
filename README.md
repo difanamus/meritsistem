@@ -1,6 +1,6 @@
 # Merit System Personel Polri
 
-Prototype aplikasi web untuk mengelola identitas personel, kualifikasi, dan perjalanan jabatan secara sistematis. Aplikasi menyediakan pencarian berbasis fungsi seperti Intelkam atau Reskrim tanpa membuat skor tersembunyi; pimpinan tetap menilai fakta riwayat yang ditampilkan.
+Prototype aplikasi web untuk mengelola identitas personel, kualifikasi, perjalanan jabatan, penugasan operasi, prestasi, dan penghargaan secara sistematis. Aplikasi menyediakan pencarian berbasis fungsi seperti Intelkam atau Reskrim tanpa membuat skor tersembunyi; pimpinan tetap menilai fakta riwayat yang ditampilkan.
 
 Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layanan dapat dijalankan secara lokal.
 
@@ -8,13 +8,15 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 
 - REST API berversi dengan Laravel dan autentikasi token Sanctum.
 - Role `SYSTEM_ADMIN`, `ADMIN_SSDM`, dan `OPERATOR`.
+- CRUD pengguna berbasis permission, assignment beberapa scope unit, aktivasi/nonaktif akun, dan pencabutan seluruh token saat akun dinonaktifkan.
 - Scope organisasi `OWN_UNIT` dan `UNIT_AND_DESCENDANTS` pada hierarki Mabes–Polda–Polres–Satker–Polsek.
 - CRUD personel, kualifikasi, serta riwayat jabatan dengan validasi dan soft delete.
+- CRUD unit organisasi, pangkat, bidang/fungsi, jenis kualifikasi, dan jenis penugasan; Operator memiliki akses baca, dengan daftar unit dibatasi scope.
 - Satu jabatan utama aktif, dengan penugasan tambahan PS, PLT, atau PLH.
 - Pergantian jabatan dan mutasi atomik: menutup jabatan lama, memperbarui Satker bila perlu, lalu membuat jabatan baru dalam satu transaksi database.
 - Upload PDF pendukung/SK opsional maksimal 5 MB pada storage privat dan download berizin.
 - Filter fungsi, jenis kualifikasi, unit, pangkat, serta sorting jumlah kualifikasi dan durasi pengalaman.
-- Antarmuka React yang responsif dan siap didemonstrasikan.
+- Antarmuka React responsif dengan navigasi berbasis role serta halaman administrasi pengguna dan scope.
 
 ## Technology stack
 
@@ -43,7 +45,7 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 
 - PHP 8.3 atau lebih baru dengan ekstensi umum Laravel dan `pdo_pgsql`.
 - Composer 2.
-- Node.js 22 atau lebih baru dan npm.
+- Node.js 22.18 atau lebih baru dan npm (Node 24 direkomendasikan untuk test bawaan tanpa dependency tambahan).
 - PostgreSQL 17, langsung atau melalui Docker Desktop.
 
 ## Menjalankan PostgreSQL dengan Docker
@@ -81,6 +83,8 @@ php artisan serve --host=127.0.0.1 --port=8000
 
 API tersedia pada `http://127.0.0.1:8000/api/v1`.
 
+Untuk upload PDF, pastikan `fileinfo` aktif, `upload_max_filesize` minimal `5M`, `post_max_size` minimal `8M`, dan folder sementara PHP writable. Jalankan `php --ini` untuk melihat konfigurasi yang dipakai. Jika Windows menampilkan `unable to create a temporary file`, buat folder `backend/storage/app/upload-tmp`, atur `upload_tmp_dir` pada `php.ini` ke path absolut folder itu, lalu restart `php artisan serve`. Folder sementara dan dokumen privat tidak perlu masuk Git. `storage:link` bukan jalur unduh PDF; semua PDF diunduh melalui API berizin.
+
 ## Instalasi frontend
 
 Buka terminal kedua:
@@ -93,6 +97,8 @@ npm run dev -- --host 127.0.0.1
 ```
 
 Antarmuka tersedia pada `http://127.0.0.1:5173`.
+
+Backend menerima permintaan browser dari `http://127.0.0.1:5173` dan `http://localhost:5173` secara default. Jika frontend dijalankan pada origin lain, atur daftar `FRONTEND_ORIGINS` (dipisahkan koma) di `backend/.env`, lalu jalankan `php artisan config:clear` dan restart server backend. API memakai bearer token, bukan cookie lintas-origin.
 
 ## Akun demo
 
@@ -114,11 +120,14 @@ php artisan test
 vendor\bin\pint --test
 
 cd ..\frontend
+npm test
 npm run lint
 npm run build
 ```
 
-Checkpoint terakhir: 43 test backend dengan 156 assertion lulus pada SQLite in-memory maupun database test PostgreSQL 17. Lint dan production build frontend juga lulus.
+Checkpoint Point 6: 126 test / 668 assertion backend lulus di SQLite dan PostgreSQL 17; 11 test frontend, lint, build, format Pint, serta validasi OpenAPI/Postman lulus. Smoke QA empat role, akses luar scope, dan kondisi tanpa hasil juga lulus. Rincian ada di [`task.md`](task.md).
+
+Narasi singkat demo Point 5: buka profil personel dan tunjukkan tiga riwayat yang dipisah (operasi, prestasi, penghargaan); tambah operasi fiktif dengan PDF opsional; verifikasi sebagai Admin SSDM lalu ubah datanya untuk menunjukkan status kembali belum diverifikasi; buka daftar personel dan filter wilayah/fungsi operasi atau urutkan jumlah/durasi. Jelaskan bahwa angka tersebut fakta kumulatif, bukan skor merit atau keputusan karier otomatis. Video presentasi resmi belum dibuat.
 
 ## Aturan domain penting
 
@@ -127,7 +136,13 @@ Checkpoint terakhir: 43 test backend dengan 156 assertion lulus pada SQLite in-m
 - Jabatan utama aktif tidak dapat langsung dihapus atau diakhiri melalui CRUD biasa. Gunakan proses pergantian jabatan atau mutasi agar riwayat konsisten.
 - Mutasi hanya diizinkan jika unit asal dan tujuan berada dalam scope pengguna.
 - Kualifikasi disajikan sebagai fakta. Jumlah kegiatan dan durasi pengalaman hanyalah alat urut/filter, bukan nilai merit otomatis.
+- Penugasan operasi, prestasi, dan penghargaan dicatat terpisah. Penugasan operasi dapat difilter menurut wilayah, tingkat, fungsi, status verifikasi, jumlah, dan total hari; durasi adalah jumlah hari tiap operasi (periode beririsan dapat dihitung dua kali), bukan lama kalender unik atau skor.
+- Operator dalam scope boleh mencatat dan mengubah fakta. Admin SSDM dan System Admin dapat memverifikasi. Perubahan fakta atau PDF membatalkan verifikasi; setiap record menampilkan pemeriksa dan waktu verifikasi.
 - Dokumen disimpan pada disk privat dan selalu melewati authorization saat diunduh.
+- System Admin dapat mengelola seluruh akun. Admin SSDM hanya dapat mengelola akun Operator. Tidak ada pengguna yang dapat mengubah role, scope, atau status akunnya sendiri melalui modul administrasi.
+- Aksi hapus pengguna merupakan deaktivasi yang dapat dipulihkan melalui edit status; data akun tidak dihapus permanen dan seluruh token login langsung dicabut.
+- Referensi yang masih dipakai personel, riwayat (termasuk soft-deleted), scope pengguna, atau unit anak tidak dapat dihapus (409). Nonaktifkan referensi agar tidak tersedia untuk input baru; riwayat lama tetap dapat dibaca.
+- Unit organisasi tidak dapat menunjuk diri sendiri atau keturunannya sebagai induk. Unit aktif harus berada di bawah induk aktif; nonaktifkan bawahan aktif sebelum induknya.
 
 ## Dokumentasi API
 
@@ -140,7 +155,10 @@ Gunakan endpoint `POST /api/v1/auth/login`, simpan nilai `token`, lalu kirim hea
 
 ## Batasan prototype
 
-- CRUD pengguna dan master data administratif belum tersedia di UI.
+- Dashboard tiap role tersedia di `/dashboard`; System Admin memiliki `/sistem` untuk pemeriksaan koneksi dan versi runtime secara read-only. Admin SSDM tidak memiliki akses teknis, sementara ringkasan Operator mengikuti scope aktif.
+- Profil memiliki CRUD kualifikasi dan riwayat jabatan berhalaman, penugasan tambahan aktif, serta upload/ganti/lepas dan unduh PDF privat. Edit mengirim hanya field yang berubah; field opsional dapat dikosongkan. File edit dikirim melalui POST dengan `_method=PUT` untuk kompatibilitas PHP 8.3.
+- Profil juga memuat CRUD penugasan operasi, prestasi, dan penghargaan dengan PDF privat opsional, soft delete, serta status verifikasi. Data contoh dalam tiga modul ini seluruhnya fiktif.
+- Hapus personel/riwayat melalui UI menggunakan konfirmasi soft delete. Penghapusan langsung jabatan utama aktif tidak tersedia; gunakan ganti jabatan/mutasi. Pemulihan arsip belum tersedia pada UI.
 - Data penilaian kinerja, assessment resmi, dan disiplin final masih direncanakan sebagai pengembangan lanjutan dengan kontrol akses tambahan.
 - Audit trail penuh dan mekanisme restore soft-delete direncanakan untuk pengembangan berikutnya.
 

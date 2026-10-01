@@ -53,6 +53,15 @@ class RiwayatJabatanController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
+    public function show(RiwayatJabatan $riwayatJabatan): JsonResponse
+    {
+        Gate::authorize('view', $riwayatJabatan);
+
+        return RiwayatJabatanResource::make($this->loadRelations($riwayatJabatan))
+            ->additional(['success' => true, 'message' => 'Detail riwayat jabatan berhasil diambil.'])
+            ->response();
+    }
+
     public function update(UpdateRiwayatJabatanRequest $request, RiwayatJabatan $riwayatJabatan): JsonResponse
     {
         $data = $request->validated();
