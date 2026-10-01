@@ -1,0 +1,36 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Source documents supplied for the examination (local reference only)
+Paparan Uji Pemrograman.pdf
+Soal CRUD.pdf
+
+# Temporary and generated files
+tmp/
+*.log
+coverage/
+
+# Backend dependencies and runtime files
+backend/vendor/
+backend/node_modules/
+backend/storage/*.key
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*
+backend/public/storage
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
