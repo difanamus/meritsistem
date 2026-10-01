@@ -129,37 +129,37 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## I. CRUD Riwayat Jabatan
 
-- [ ] Membuat endpoint daftar riwayat jabatan personel.
-- [ ] Membuat endpoint tambah riwayat jabatan.
-- [ ] Membuat endpoint ubah riwayat jabatan.
-- [ ] Membuat endpoint soft delete riwayat selesai.
-- [ ] Memvalidasi tanggal mulai/selesai.
-- [ ] Memvalidasi satu jabatan utama aktif.
-- [ ] Mencegah overlap riwayat jabatan utama.
-- [ ] Mengizinkan overlap penugasan tambahan.
-- [ ] Mendukung DEFINITIF, PS, PLT, dan PLH.
-- [ ] Mengembalikan 409 saat menghapus jabatan utama aktif.
-- [ ] Membuat proses mengganti jabatan utama secara atomic.
+- [x] Membuat endpoint daftar riwayat jabatan personel.
+- [x] Membuat endpoint tambah riwayat jabatan.
+- [x] Membuat endpoint ubah riwayat jabatan.
+- [x] Membuat endpoint soft delete riwayat selesai.
+- [x] Memvalidasi tanggal mulai/selesai.
+- [x] Memvalidasi satu jabatan utama aktif.
+- [x] Mencegah overlap riwayat jabatan utama.
+- [x] Mengizinkan overlap penugasan tambahan.
+- [x] Mendukung DEFINITIF, PS, PLT, dan PLH.
+- [x] Mengembalikan 409 saat menghapus jabatan utama aktif.
+- [x] Membuat proses mengganti jabatan utama secara atomic.
 - [x] Membuat proses mengakhiri jabatan sesuai status personel yang relevan.
-- [ ] Menambahkan upload SK PDF opsional maksimal 5 MB.
-- [ ] Membuat endpoint download SK berizin.
-- [ ] Menampilkan riwayat secara kronologis.
-- [ ] Membuat test jabatan utama dan penugasan tambahan.
+- [x] Menambahkan upload SK PDF opsional maksimal 5 MB.
+- [x] Membuat endpoint download SK berizin.
+- [x] Menampilkan riwayat secara kronologis.
+- [x] Membuat test jabatan utama dan penugasan tambahan.
 
 ## J. Mutasi
 
-- [ ] Membuat endpoint/proses mutasi.
-- [ ] Memvalidasi unit asal berada dalam scope pengguna.
-- [ ] Memvalidasi unit tujuan berada dalam scope pengguna.
-- [ ] Menutup jabatan utama lama.
-- [ ] Membuat jabatan utama baru.
-- [ ] Memperbarui unit personel.
-- [ ] Menjalankan seluruh perubahan dalam satu transaction.
-- [ ] Menyimpan actor dan waktu perubahan.
-- [ ] Memastikan operator lama kehilangan akses setelah mutasi.
-- [ ] Memastikan operator unit baru mendapat akses berdasarkan scope.
+- [x] Membuat endpoint/proses mutasi.
+- [x] Memvalidasi unit asal berada dalam scope pengguna.
+- [x] Memvalidasi unit tujuan berada dalam scope pengguna.
+- [x] Menutup jabatan utama lama.
+- [x] Membuat jabatan utama baru.
+- [x] Memperbarui unit personel.
+- [x] Menjalankan seluruh perubahan dalam satu transaction.
+- [x] Menyimpan actor dan waktu perubahan.
+- [x] Memastikan operator lama kehilangan akses setelah mutasi.
+- [x] Memastikan operator unit baru mendapat akses berdasarkan scope.
 - [ ] Menguji mutasi dalam unit, antar-Polres, dan penolakan antar-scope.
-- [ ] Menguji rollback ketika mutasi gagal di tengah proses.
+- [x] Menguji rollback ketika mutasi gagal di tengah proses.
 
 ## K. Filter Kualifikasi dan Pengalaman
 
@@ -180,7 +180,7 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Menangani 401.
 - [x] Menangani 403.
 - [ ] Menangani 404.
-- [ ] Menangani 409.
+- [x] Menangani 409.
 - [ ] Menangani 422.
 - [ ] Menangani 500 tanpa membocorkan stack trace.
 - [x] Menambahkan API version prefix `/api/v1`.
