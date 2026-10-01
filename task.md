@@ -210,8 +210,8 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Membuat state/session authentication.
 - [x] Membuat halaman login.
 - [x] Membuat protected route.
-- [x] Membuat layout dan navigasi berdasarkan permission.
-- [x] Membuat dashboard ringkas.
+- [ ] Membuat layout dan navigasi berdasarkan permission untuk System Admin, Admin SSDM, dan Operator.
+- [ ] Membuat dashboard ringkas berbasis role dan cakupan akses.
 - [x] Membuat halaman daftar personel.
 - [x] Membuat search, filter, sorting, dan pagination UI.
 - [x] Membuat form tambah/edit personel.
@@ -227,6 +227,10 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Membuat UI pergantian jabatan dan mutasi.
 - [ ] Membuat halaman pengguna dan scope untuk Admin.
 - [ ] Membuat halaman referensi minimum.
+- [ ] Membuat menu dan ruang kerja System Admin untuk pengguna, scope, referensi, dan monitoring sistem.
+- [ ] Membuat menu dan ruang kerja Admin SSDM untuk pengelolaan bisnis nasional.
+- [ ] Membuat menu Operator yang hanya menampilkan fitur dan aksi dalam kewenangan scope-nya.
+- [ ] Menyembunyikan tombol/aksi yang tidak diizinkan berdasarkan role, tanpa menggantikan policy backend.
 - [x] Menampilkan validation error dari API secara jelas.
 - [x] Membuat halaman/state 401, 403, dan 404.
 - [x] Memastikan UI responsif dan layak untuk demo.
