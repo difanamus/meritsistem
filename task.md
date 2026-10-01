@@ -74,12 +74,12 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Membuat middleware/policy untuk System Admin.
 - [x] Membuat policy akses global Admin SSDM.
 - [x] Membuat policy akses Operator berdasarkan scope.
-- [ ] Menerapkan scope pada query daftar, detail, create, update, dan delete.
+- [x] Menerapkan scope pada query daftar, detail, create, update, dan delete.
 - [x] Memastikan UI bukan satu-satunya lapisan authorization.
 - [x] Menguji akses Operator terhadap unit sendiri.
 - [x] Menguji penolakan akses ke unit lain.
 - [x] Menguji Operator unit induk terhadap descendant.
-- [ ] Menguji IDOR dengan mengganti ID pada URL/API.
+- [x] Menguji IDOR dengan mengganti ID pada URL/API.
 
 ## F. CRUD Data Referensi
 
@@ -93,22 +93,22 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## G. CRUD Personel
 
-- [ ] Membuat endpoint daftar personel.
-- [ ] Membuat endpoint detail personel.
-- [ ] Membuat endpoint tambah personel.
-- [ ] Membuat endpoint ubah personel.
-- [ ] Membuat endpoint soft delete personel.
+- [x] Membuat endpoint daftar personel.
+- [x] Membuat endpoint detail personel.
+- [x] Membuat endpoint tambah personel.
+- [x] Membuat endpoint ubah personel.
+- [x] Membuat endpoint soft delete personel.
 - [ ] Membuat endpoint restore sesuai permission.
-- [ ] Memvalidasi field wajib.
-- [ ] Memvalidasi nomor identitas sebagai string dan unik.
-- [ ] Memvalidasi tanggal lahir.
-- [ ] Memvalidasi pangkat dan unit aktif.
-- [ ] Memastikan Operator tidak dapat memilih unit di luar scope.
-- [ ] Menambahkan pagination.
-- [ ] Menambahkan pencarian nama dan NRP/NIP.
+- [x] Memvalidasi field wajib.
+- [x] Memvalidasi nomor identitas sebagai string dan unik.
+- [x] Memvalidasi tanggal lahir.
+- [x] Memvalidasi pangkat dan unit aktif.
+- [x] Memastikan Operator tidak dapat memilih unit di luar scope.
+- [x] Menambahkan pagination.
+- [x] Menambahkan pencarian nama dan NRP/NIP.
 - [ ] Menambahkan filter unit, pangkat, fungsi, jenis kualifikasi, dan status.
-- [ ] Menambahkan sorting yang disepakati.
-- [ ] Membuat test CRUD dan validation personel.
+- [x] Menambahkan sorting yang disepakati.
+- [x] Membuat test CRUD dan validation personel.
 
 ## H. CRUD Kualifikasi
 
@@ -140,7 +140,7 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [ ] Mendukung DEFINITIF, PS, PLT, dan PLH.
 - [ ] Mengembalikan 409 saat menghapus jabatan utama aktif.
 - [ ] Membuat proses mengganti jabatan utama secara atomic.
-- [ ] Membuat proses mengakhiri jabatan sesuai status personel yang relevan.
+- [x] Membuat proses mengakhiri jabatan sesuai status personel yang relevan.
 - [ ] Menambahkan upload SK PDF opsional maksimal 5 MB.
 - [ ] Membuat endpoint download SK berizin.
 - [ ] Menampilkan riwayat secara kronologis.
