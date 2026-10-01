@@ -1,8 +1,13 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::prefix('v1')->group(function (): void {
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+
+    Route::middleware(['auth:sanctum', 'active.user'])->group(function (): void {
+        Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+    });
+});

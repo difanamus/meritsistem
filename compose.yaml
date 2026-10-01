@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: merit-system-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: merit_system
+      POSTGRES_USER: merit
+      POSTGRES_PASSWORD: merit_local_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - merit_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U merit -d merit_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  merit_postgres_data:

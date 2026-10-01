@@ -30,55 +30,55 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## C. Database dan Data Referensi
 
-- [ ] Membuat migration `users` dan kebutuhan Sanctum.
-- [ ] Membuat migration `unit_organisasi` dengan relasi parent-child.
-- [ ] Membuat migration `user_scopes`.
-- [ ] Membuat migration `pangkats`.
-- [ ] Membuat migration `bidang_fungsi`.
-- [ ] Membuat migration `jenis_kualifikasi`.
-- [ ] Membuat migration `jenis_penugasan`.
-- [ ] Membuat migration `personel`.
-- [ ] Membuat migration `kualifikasi_personel`.
-- [ ] Membuat migration `riwayat_jabatan`.
-- [ ] Menambahkan foreign key, index, unique constraint, dan soft delete.
-- [ ] Menambahkan constraint satu jabatan utama aktif per personel.
-- [ ] Membuat model dan relasi Eloquent.
-- [ ] Membuat factory data uji.
-- [ ] Membuat seeder pangkat.
-- [ ] Membuat seeder bidang/fungsi.
-- [ ] Membuat seeder jenis kualifikasi.
-- [ ] Membuat seeder DEFINITIF, PS, PLT, dan PLH.
-- [ ] Membuat seeder struktur organisasi contoh.
-- [ ] Membuat akun demo System Admin, Admin SSDM, dan beberapa Operator scope.
-- [ ] Membuat personel, kualifikasi, dan riwayat jabatan demo.
-- [ ] Menjalankan migration dan seeder dari database kosong.
+- [x] Membuat migration `users` dan kebutuhan Sanctum.
+- [x] Membuat migration `unit_organisasi` dengan relasi parent-child.
+- [x] Membuat migration `user_scopes`.
+- [x] Membuat migration `pangkats`.
+- [x] Membuat migration `bidang_fungsi`.
+- [x] Membuat migration `jenis_kualifikasi`.
+- [x] Membuat migration `jenis_penugasan`.
+- [x] Membuat migration `personel`.
+- [x] Membuat migration `kualifikasi_personel`.
+- [x] Membuat migration `riwayat_jabatan`.
+- [x] Menambahkan foreign key, index, unique constraint, dan soft delete.
+- [x] Menambahkan constraint satu jabatan utama aktif per personel.
+- [x] Membuat model dan relasi Eloquent.
+- [x] Membuat factory data uji.
+- [x] Membuat seeder pangkat.
+- [x] Membuat seeder bidang/fungsi.
+- [x] Membuat seeder jenis kualifikasi.
+- [x] Membuat seeder DEFINITIF, PS, PLT, dan PLH.
+- [x] Membuat seeder struktur organisasi contoh.
+- [x] Membuat akun demo System Admin, Admin SSDM, dan beberapa Operator scope.
+- [x] Membuat personel, kualifikasi, dan riwayat jabatan demo.
+- [x] Menjalankan migration dan seeder dari database kosong.
 
 ## D. Authentication dan Pengguna
 
-- [ ] Memasang dan mengonfigurasi Laravel Sanctum.
-- [ ] Membuat endpoint login.
-- [ ] Membuat endpoint logout/revoke token.
-- [ ] Membuat endpoint profil pengguna saat ini.
-- [ ] Membatasi login akun nonaktif.
+- [x] Memasang dan mengonfigurasi Laravel Sanctum.
+- [x] Membuat endpoint login.
+- [x] Membuat endpoint logout/revoke token.
+- [x] Membuat endpoint profil pengguna saat ini.
+- [x] Membatasi login akun nonaktif.
 - [ ] Mencabut token saat akun dinonaktifkan.
 - [ ] Membuat CRUD pengguna sesuai permission.
 - [ ] Membuat assignment role, unit, dan scope pengguna.
 - [ ] Mencegah pengguna menaikkan role atau mengubah scope sendiri.
-- [ ] Membuat test authentication berhasil/gagal.
+- [x] Membuat test authentication berhasil/gagal.
 
 ## E. Authorization dan Organizational Scope
 
-- [ ] Membuat enum/konstanta role.
-- [ ] Membuat `OWN_UNIT` dan `UNIT_AND_DESCENDANTS` scope.
-- [ ] Membuat resolver descendant unit.
-- [ ] Membuat middleware/policy untuk System Admin.
-- [ ] Membuat policy akses global Admin SSDM.
-- [ ] Membuat policy akses Operator berdasarkan scope.
+- [x] Membuat enum/konstanta role.
+- [x] Membuat `OWN_UNIT` dan `UNIT_AND_DESCENDANTS` scope.
+- [x] Membuat resolver descendant unit.
+- [x] Membuat middleware/policy untuk System Admin.
+- [x] Membuat policy akses global Admin SSDM.
+- [x] Membuat policy akses Operator berdasarkan scope.
 - [ ] Menerapkan scope pada query daftar, detail, create, update, dan delete.
-- [ ] Memastikan UI bukan satu-satunya lapisan authorization.
-- [ ] Menguji akses Operator terhadap unit sendiri.
-- [ ] Menguji penolakan akses ke unit lain.
-- [ ] Menguji Operator unit induk terhadap descendant.
+- [x] Memastikan UI bukan satu-satunya lapisan authorization.
+- [x] Menguji akses Operator terhadap unit sendiri.
+- [x] Menguji penolakan akses ke unit lain.
+- [x] Menguji Operator unit induk terhadap descendant.
 - [ ] Menguji IDOR dengan mengganti ID pada URL/API.
 
 ## F. CRUD Data Referensi
@@ -177,14 +177,14 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 - [ ] Menetapkan format respons sukses yang konsisten.
 - [ ] Menetapkan format validation error yang konsisten.
-- [ ] Menangani 401.
-- [ ] Menangani 403.
+- [x] Menangani 401.
+- [x] Menangani 403.
 - [ ] Menangani 404.
 - [ ] Menangani 409.
 - [ ] Menangani 422.
 - [ ] Menangani 500 tanpa membocorkan stack trace.
-- [ ] Menambahkan API version prefix `/api/v1`.
-- [ ] Menambahkan rate limiting yang sesuai.
+- [x] Menambahkan API version prefix `/api/v1`.
+- [x] Menambahkan rate limiting yang sesuai.
 - [ ] Mengonfigurasi CORS untuk frontend lokal.
 
 ## M. Frontend
