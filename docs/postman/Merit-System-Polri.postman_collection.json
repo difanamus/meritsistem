@@ -23,7 +23,7 @@
               "exec": [
                 "pm.test('Login berhasil', () => pm.response.to.have.status(200));",
                 "const body = pm.response.json();",
-                "if (body.token) pm.environment.set('token', body.token);"
+                "if (body.data?.token) pm.environment.set('token', body.data.token);"
               ]
             }
           }],
@@ -70,7 +70,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jenis_personel\": \"POLRI\",\n  \"nomor_identitas\": \"99001122\",\n  \"nama_lengkap\": \"Personel Demo Postman\",\n  \"pangkat_id\": {{pangkat_id}},\n  \"tempat_lahir\": \"Bengkulu\",\n  \"tanggal_lahir\": \"1990-01-01\",\n  \"unit_organisasi_id\": {{unit_id}},\n  \"status\": \"aktif\",\n  \"jabatan_utama\": {\n    \"nama_jabatan\": \"Banit Sat Intelkam\",\n    \"bidang_fungsi_id\": {{bidang_fungsi_id}},\n    \"jenis_penugasan_id\": {{jenis_penugasan_id}},\n    \"tanggal_mulai\": \"2026-01-01\"\n  }\n}"
+              "raw": "{\n  \"jenis_personel\": \"polri\",\n  \"nomor_identitas\": \"99001122\",\n  \"nama_lengkap\": \"Personel Demo Postman\",\n  \"pangkat_id\": {{pangkat_id}},\n  \"tempat_lahir\": \"Bengkulu\",\n  \"tanggal_lahir\": \"1990-01-01\",\n  \"unit_organisasi_id\": {{unit_id}},\n  \"status\": \"aktif\",\n  \"jabatan_utama\": {\n    \"nama_jabatan\": \"Banit Sat Intelkam\",\n    \"bidang_fungsi_id\": {{bidang_fungsi_id}},\n    \"jenis_penugasan_id\": {{jenis_penugasan_id}},\n    \"tanggal_mulai\": \"2026-01-01\"\n  }\n}"
             },
             "url": "{{base_url}}/personel"
           }

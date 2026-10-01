@@ -37,11 +37,14 @@ paths:
               schema:
                 type: object
                 properties:
+                  success: { type: boolean, example: true }
                   message: { type: string }
-                  token: { type: string }
-                  token_type: { type: string, example: Bearer }
-                  expires_at: { type: [string, 'null'], format: date-time }
-                  user: { $ref: '#/components/schemas/User' }
+                  data:
+                    type: object
+                    properties:
+                      token: { type: string }
+                      token_type: { type: string, example: Bearer }
+                      user: { $ref: '#/components/schemas/User' }
         '422': { $ref: '#/components/responses/ValidationError' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/me:
@@ -420,7 +423,7 @@ components:
         email: { type: string, format: email, maxLength: 255 }
         password: { type: string, format: password, maxLength: 255 }
         device_name: { type: string, maxLength: 100 }
-    JenisPersonel: { type: string, enum: [POLRI, PNS] }
+    JenisPersonel: { type: string, enum: [polri, pns] }
     StatusPersonel: { type: string, enum: [aktif, pensiun, nonaktif] }
     ReferenceItem:
       type: object
@@ -433,7 +436,7 @@ components:
         id: { type: integer }
         name: { type: string }
         email: { type: string, format: email }
-        role: { type: string, enum: [SYSTEM_ADMIN, ADMIN_SSDM, OPERATOR] }
+        role: { type: string, enum: [system_admin, admin_ssdm, operator] }
         is_active: { type: boolean }
         scopes: { type: array, items: { type: object } }
     PersonelCreate:
