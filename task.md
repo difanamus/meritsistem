@@ -237,32 +237,32 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## O. Dokumentasi API
 
-- [ ] Membuat spesifikasi OpenAPI/Swagger.
-- [ ] Mendokumentasikan authentication/token.
-- [ ] Mendokumentasikan request, response, validation, dan error.
-- [ ] Mendokumentasikan filter, sorting, dan pagination.
-- [ ] Mendokumentasikan upload/download PDF.
-- [ ] Membuat Postman Collection.
-- [ ] Membuat Postman environment lokal.
+- [x] Membuat spesifikasi OpenAPI/Swagger.
+- [x] Mendokumentasikan authentication/token.
+- [x] Mendokumentasikan request, response, validation, dan error.
+- [x] Mendokumentasikan filter, sorting, dan pagination.
+- [x] Mendokumentasikan upload/download PDF.
+- [x] Membuat Postman Collection.
+- [x] Membuat Postman environment lokal.
 - [ ] Menguji seluruh request utama dari dokumentasi.
-- [ ] Memastikan dokumentasi sesuai endpoint aktual.
+- [x] Memastikan dokumentasi sesuai endpoint aktual.
 
 ## P. README dan Dokumen Teknis
 
-- [ ] Menulis penjelasan aplikasi.
-- [ ] Menulis technology stack dan alasan pemilihannya.
-- [ ] Menulis requirement runtime.
-- [ ] Menulis instalasi backend.
-- [ ] Menulis instalasi frontend.
-- [ ] Menulis konfigurasi PostgreSQL.
-- [ ] Menulis migration dan seeding.
-- [ ] Menulis cara menjalankan aplikasi lokal.
-- [ ] Menulis cara menjalankan test.
-- [ ] Menulis akun demo tiap role/scope.
+- [x] Menulis penjelasan aplikasi.
+- [x] Menulis technology stack dan alasan pemilihannya.
+- [x] Menulis requirement runtime.
+- [x] Menulis instalasi backend.
+- [x] Menulis instalasi frontend.
+- [x] Menulis konfigurasi PostgreSQL.
+- [x] Menulis migration dan seeding.
+- [x] Menulis cara menjalankan aplikasi lokal.
+- [x] Menulis cara menjalankan test.
+- [x] Menulis akun demo tiap role/scope.
 - [ ] Menulis struktur database.
-- [ ] Menulis daftar endpoint/dokumentasi API.
-- [ ] Menulis keputusan authorization dan mutasi.
-- [ ] Menulis keterbatasan dan pengembangan lanjutan.
+- [x] Menulis daftar endpoint/dokumentasi API.
+- [x] Menulis keputusan authorization dan mutasi.
+- [x] Menulis keterbatasan dan pengembangan lanjutan.
 - [ ] Membuat ERD.
 - [ ] Membuat diagram flow authentication.
 - [ ] Membuat diagram flow authorization/scope.

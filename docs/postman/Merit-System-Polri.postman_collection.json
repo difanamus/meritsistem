@@ -1,0 +1,189 @@
+{
+  "info": {
+    "_postman_id": "b22364c2-cdb8-4aba-9a2e-91375d3d759c",
+    "name": "Merit System Personel Polri API",
+    "description": "Collection endpoint utama Merit System. Jalankan Login lebih dahulu; token disimpan otomatis ke environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "auth": { "type": "noauth" },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('Login berhasil', () => pm.response.to.have.status(200));",
+                "const body = pm.response.json();",
+                "if (body.token) pm.environment.set('token', body.token);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"device_name\": \"postman\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        { "name": "Profil Saya", "request": { "method": "GET", "url": "{{base_url}}/auth/me" } },
+        { "name": "Logout", "request": { "method": "POST", "url": "{{base_url}}/auth/logout" } }
+      ]
+    },
+    {
+      "name": "Personel",
+      "item": [
+        {
+          "name": "Daftar + Filter Merit",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/personel?search=&bidang_fungsi_id={{bidang_fungsi_id}}&sort=durasi_pengalaman&direction=desc&per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["personel"],
+              "query": [
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "bidang_fungsi_id", "value": "{{bidang_fungsi_id}}", "disabled": true },
+                { "key": "sort", "value": "durasi_pengalaman" },
+                { "key": "direction", "value": "desc" },
+                { "key": "per_page", "value": "10" }
+              ]
+            }
+          }
+        },
+        { "name": "Detail", "request": { "method": "GET", "url": "{{base_url}}/personel/{{personel_id}}" } },
+        {
+          "name": "Tambah",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jenis_personel\": \"POLRI\",\n  \"nomor_identitas\": \"99001122\",\n  \"nama_lengkap\": \"Personel Demo Postman\",\n  \"pangkat_id\": {{pangkat_id}},\n  \"tempat_lahir\": \"Bengkulu\",\n  \"tanggal_lahir\": \"1990-01-01\",\n  \"unit_organisasi_id\": {{unit_id}},\n  \"status\": \"aktif\",\n  \"jabatan_utama\": {\n    \"nama_jabatan\": \"Banit Sat Intelkam\",\n    \"bidang_fungsi_id\": {{bidang_fungsi_id}},\n    \"jenis_penugasan_id\": {{jenis_penugasan_id}},\n    \"tanggal_mulai\": \"2026-01-01\"\n  }\n}"
+            },
+            "url": "{{base_url}}/personel"
+          }
+        },
+        {
+          "name": "Ubah Identitas",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nama_lengkap\": \"Nama Personel Diperbarui\"\n}" },
+            "url": "{{base_url}}/personel/{{personel_id}}"
+          }
+        },
+        { "name": "Soft Delete", "request": { "method": "DELETE", "url": "{{base_url}}/personel/{{personel_id}}" } }
+      ]
+    },
+    {
+      "name": "Kualifikasi",
+      "item": [
+        { "name": "Daftar", "request": { "method": "GET", "url": "{{base_url}}/personel/{{personel_id}}/kualifikasi" } },
+        {
+          "name": "Tambah dengan PDF Opsional",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "jenis_kualifikasi_id", "value": "{{jenis_kualifikasi_id}}", "type": "text" },
+                { "key": "bidang_fungsi_id", "value": "{{bidang_fungsi_id}}", "type": "text" },
+                { "key": "nama_kualifikasi", "value": "Pelatihan Analisis Intelijen", "type": "text" },
+                { "key": "tahun", "value": "2026", "type": "text" },
+                { "key": "dokumen_pendukung", "type": "file", "src": [], "disabled": true }
+              ]
+            },
+            "url": "{{base_url}}/personel/{{personel_id}}/kualifikasi"
+          }
+        },
+        {
+          "name": "Ubah",
+          "request": {
+            "method": "PUT",
+            "body": { "mode": "formdata", "formdata": [{ "key": "nama_kualifikasi", "value": "Pelatihan Analisis Intelijen Lanjutan", "type": "text" }] },
+            "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}"
+          }
+        },
+        { "name": "Download PDF", "request": { "method": "GET", "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}/dokumen" } },
+        { "name": "Soft Delete", "request": { "method": "DELETE", "url": "{{base_url}}/kualifikasi/{{kualifikasi_id}}" } }
+      ]
+    },
+    {
+      "name": "Riwayat Jabatan dan Mutasi",
+      "item": [
+        { "name": "Daftar Riwayat", "request": { "method": "GET", "url": "{{base_url}}/personel/{{personel_id}}/riwayat-jabatan" } },
+        {
+          "name": "Tambah Penugasan Tambahan",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nama_jabatan", "value": "Plt. Kasat Intelkam", "type": "text" },
+                { "key": "unit_organisasi_id", "value": "{{unit_id}}", "type": "text" },
+                { "key": "bidang_fungsi_id", "value": "{{bidang_fungsi_id}}", "type": "text" },
+                { "key": "jenis_penugasan_id", "value": "{{jenis_penugasan_id}}", "type": "text" },
+                { "key": "tanggal_mulai", "value": "2026-08-01", "type": "text" },
+                { "key": "is_jabatan_utama", "value": "0", "type": "text" },
+                { "key": "dokumen_sk", "type": "file", "src": [], "disabled": true }
+              ]
+            },
+            "url": "{{base_url}}/personel/{{personel_id}}/riwayat-jabatan"
+          }
+        },
+        {
+          "name": "Ganti Jabatan",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nama_jabatan", "value": "Kanit Intelkam", "type": "text" },
+                { "key": "bidang_fungsi_id", "value": "{{bidang_fungsi_id}}", "type": "text" },
+                { "key": "jenis_penugasan_id", "value": "{{jenis_penugasan_id}}", "type": "text" },
+                { "key": "tanggal_mulai", "value": "2026-10-01", "type": "text" }
+              ]
+            },
+            "url": "{{base_url}}/personel/{{personel_id}}/ganti-jabatan"
+          }
+        },
+        {
+          "name": "Mutasi Lintas Unit",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "unit_organisasi_id", "value": "{{unit_tujuan_id}}", "type": "text" },
+                { "key": "nama_jabatan", "value": "Kanit Intelkam", "type": "text" },
+                { "key": "bidang_fungsi_id", "value": "{{bidang_fungsi_id}}", "type": "text" },
+                { "key": "jenis_penugasan_id", "value": "{{jenis_penugasan_id}}", "type": "text" },
+                { "key": "tanggal_mulai", "value": "2026-10-01", "type": "text" }
+              ]
+            },
+            "url": "{{base_url}}/personel/{{personel_id}}/mutasi"
+          }
+        },
+        { "name": "Download SK", "request": { "method": "GET", "url": "{{base_url}}/riwayat-jabatan/{{riwayat_jabatan_id}}/dokumen" } },
+        { "name": "Hapus Riwayat Selesai", "request": { "method": "DELETE", "url": "{{base_url}}/riwayat-jabatan/{{riwayat_jabatan_id}}" } }
+      ]
+    },
+    {
+      "name": "Referensi",
+      "item": [{ "name": "Opsi Form Sesuai Scope", "request": { "method": "GET", "url": "{{base_url}}/reference-options" } }]
+    }
+  ]
+}
