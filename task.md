@@ -259,14 +259,14 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Menulis cara menjalankan aplikasi lokal.
 - [x] Menulis cara menjalankan test.
 - [x] Menulis akun demo tiap role/scope.
-- [ ] Menulis struktur database.
+- [x] Menulis struktur database.
 - [x] Menulis daftar endpoint/dokumentasi API.
 - [x] Menulis keputusan authorization dan mutasi.
 - [x] Menulis keterbatasan dan pengembangan lanjutan.
-- [ ] Membuat ERD.
-- [ ] Membuat diagram flow authentication.
-- [ ] Membuat diagram flow authorization/scope.
-- [ ] Membuat diagram flow mutasi.
+- [x] Membuat ERD.
+- [x] Membuat diagram flow authentication.
+- [x] Membuat diagram flow authorization/scope.
+- [x] Membuat diagram flow mutasi.
 - [ ] Menguji README dari kondisi setup bersih.
 
 ## Q. Git dan Repository

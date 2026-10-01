@@ -132,6 +132,7 @@ Checkpoint terakhir: 43 test backend dengan 156 assertion lulus, serta lint dan 
 - Spesifikasi: [`docs/api/openapi.yaml`](docs/api/openapi.yaml)
 - Postman collection: [`docs/postman/Merit-System-Polri.postman_collection.json`](docs/postman/Merit-System-Polri.postman_collection.json)
 - Postman environment: [`docs/postman/Local.postman_environment.json`](docs/postman/Local.postman_environment.json)
+- ERD dan diagram alur: [`docs/architecture.md`](docs/architecture.md)
 
 Gunakan endpoint `POST /api/v1/auth/login`, simpan nilai `token`, lalu kirim header `Authorization: Bearer <token>` pada endpoint terproteksi.
 
