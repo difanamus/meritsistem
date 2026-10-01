@@ -106,7 +106,7 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Memastikan Operator tidak dapat memilih unit di luar scope.
 - [x] Menambahkan pagination.
 - [x] Menambahkan pencarian nama dan NRP/NIP.
-- [ ] Menambahkan filter unit, pangkat, fungsi, jenis kualifikasi, dan status.
+- [x] Menambahkan filter unit, pangkat, fungsi, jenis kualifikasi, dan status.
 - [x] Menambahkan sorting yang disepakati.
 - [x] Membuat test CRUD dan validation personel.
 
@@ -163,15 +163,15 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## K. Filter Kualifikasi dan Pengalaman
 
-- [ ] Membuat filter personel berdasarkan bidang/fungsi.
-- [ ] Menghitung jumlah kualifikasi relevan per personel.
-- [ ] Menghitung durasi pengalaman relevan dari riwayat jabatan.
-- [ ] Menambahkan sorting jumlah kualifikasi.
-- [ ] Menambahkan sorting durasi pengalaman.
-- [ ] Menambahkan sorting kualifikasi terbaru.
-- [ ] Memastikan hasil hanya menampilkan data dalam scope pengguna.
-- [ ] Memastikan tidak ada skor/ranking tersembunyi.
-- [ ] Membuat test query filter dan sorting.
+- [x] Membuat filter personel berdasarkan bidang/fungsi.
+- [x] Menghitung jumlah kualifikasi relevan per personel.
+- [x] Menghitung durasi pengalaman relevan dari riwayat jabatan.
+- [x] Menambahkan sorting jumlah kualifikasi.
+- [x] Menambahkan sorting durasi pengalaman.
+- [x] Menambahkan sorting kualifikasi terbaru.
+- [x] Memastikan hasil hanya menampilkan data dalam scope pengguna.
+- [x] Memastikan tidak ada skor/ranking tersembunyi.
+- [x] Membuat test query filter dan sorting.
 
 ## L. Error Handling dan API Quality
 

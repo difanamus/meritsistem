@@ -6,9 +6,12 @@ use App\Enums\ScopeType;
 use App\Enums\StatusPersonel;
 use App\Enums\UserRole;
 use App\Models\BidangFungsi;
+use App\Models\JenisKualifikasi;
 use App\Models\JenisPenugasan;
+use App\Models\KualifikasiPersonel;
 use App\Models\Pangkat;
 use App\Models\Personel;
+use App\Models\RiwayatJabatan;
 use App\Models\UnitOrganisasi;
 use App\Models\User;
 use App\Models\UserScope;
@@ -200,6 +203,62 @@ class PersonelApiTest extends TestCase
 
         $this->assertSoftDeleted($personel);
         $this->assertNotNull($position->refresh()->tanggal_selesai);
+    }
+
+    public function test_function_filter_returns_factual_qualification_and_experience_summary_without_score(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::AdminSsdm]);
+        Sanctum::actingAs($admin);
+        $intelkam = BidangFungsi::factory()->create(['nama' => 'Intelkam']);
+        $reskrim = BidangFungsi::factory()->create(['nama' => 'Reskrim']);
+        $qualificationType = JenisKualifikasi::factory()->create();
+        $assignmentType = JenisPenugasan::factory()->create();
+        $personA = Personel::factory()->create(['nama_lengkap' => 'Andi Intel']);
+        $personB = Personel::factory()->create(['nama_lengkap' => 'Budi Intel']);
+        $personC = Personel::factory()->create(['nama_lengkap' => 'Citra Reskrim']);
+
+        KualifikasiPersonel::factory()->count(2)->for($personA)->create([
+            'bidang_fungsi_id' => $intelkam->id,
+            'jenis_kualifikasi_id' => $qualificationType->id,
+            'tahun' => 2025,
+        ]);
+        KualifikasiPersonel::factory()->for($personB)->create([
+            'bidang_fungsi_id' => $intelkam->id,
+            'jenis_kualifikasi_id' => $qualificationType->id,
+            'tahun' => 2024,
+        ]);
+        KualifikasiPersonel::factory()->for($personC)->create([
+            'bidang_fungsi_id' => $reskrim->id,
+            'jenis_kualifikasi_id' => $qualificationType->id,
+        ]);
+        RiwayatJabatan::factory()->for($personA)->create([
+            'bidang_fungsi_id' => $intelkam->id,
+            'jenis_penugasan_id' => $assignmentType->id,
+            'tanggal_mulai' => '2020-01-01',
+            'tanggal_selesai' => '2022-12-31',
+        ]);
+        RiwayatJabatan::factory()->for($personB)->create([
+            'bidang_fungsi_id' => $intelkam->id,
+            'jenis_penugasan_id' => $assignmentType->id,
+            'tanggal_mulai' => '2010-01-01',
+            'tanggal_selesai' => '2020-12-31',
+        ]);
+
+        $byQualificationCount = $this->getJson(
+            "/api/v1/personel?bidang_fungsi_id={$intelkam->id}&sort=jumlah_kualifikasi&direction=desc",
+        );
+        $byQualificationCount
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $personA->id)
+            ->assertJsonPath('data.0.ringkasan_relevan.jumlah_kualifikasi', 2)
+            ->assertJsonMissingPath('data.0.skor');
+
+        $this->getJson(
+            "/api/v1/personel?bidang_fungsi_id={$intelkam->id}&sort=durasi_pengalaman&direction=desc",
+        )
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $personB->id);
     }
 
     /** @return array<string, mixed> */

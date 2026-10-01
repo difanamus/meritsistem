@@ -8,8 +8,10 @@ use App\Http\Requests\Personel\IndexPersonelRequest;
 use App\Http\Requests\Personel\StorePersonelRequest;
 use App\Http\Requests\Personel\UpdatePersonelRequest;
 use App\Http\Resources\PersonelResource;
+use App\Models\KualifikasiPersonel;
 use App\Models\Pangkat;
 use App\Models\Personel;
+use App\Models\RiwayatJabatan;
 use App\Services\OrganizationalScopeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -26,12 +28,32 @@ class PersonelController extends Controller
         OrganizationalScopeService $scopeService,
     ): AnonymousResourceCollection {
         $filters = $request->validated();
+        $functionId = $filters['bidang_fungsi_id'] ?? null;
         $query = $scopeService->scopePersonelQuery(
             Personel::query()
                 ->with(['pangkat', 'unitOrganisasi', 'jabatanUtamaAktif.unitOrganisasi', 'jabatanUtamaAktif.bidangFungsi', 'jabatanUtamaAktif.jenisPenugasan'])
-                ->withCount('kualifikasi'),
+                ->withCount([
+                    'kualifikasi',
+                    'kualifikasi as jumlah_kualifikasi_relevan' => fn (Builder $query) => $query
+                        ->when($functionId, fn (Builder $query, int $id) => $query->where('bidang_fungsi_id', $id)),
+                ]),
             $request->user(),
         );
+
+        $durationExpression = DB::getDriverName() === 'pgsql'
+            ? 'COALESCE(SUM((COALESCE(tanggal_selesai, CURRENT_DATE) - tanggal_mulai) + 1), 0)'
+            : 'COALESCE(SUM(julianday(COALESCE(tanggal_selesai, CURRENT_DATE)) - julianday(tanggal_mulai) + 1), 0)';
+
+        $query->addSelect([
+            'durasi_pengalaman_hari' => RiwayatJabatan::query()
+                ->selectRaw($durationExpression)
+                ->whereColumn('riwayat_jabatan.personel_id', 'personel.id')
+                ->when($functionId, fn (Builder $query, int $id) => $query->where('bidang_fungsi_id', $id)),
+            'tahun_kualifikasi_terbaru' => KualifikasiPersonel::query()
+                ->selectRaw('MAX(tahun)')
+                ->whereColumn('kualifikasi_personel.personel_id', 'personel.id')
+                ->when($functionId, fn (Builder $query, int $id) => $query->where('bidang_fungsi_id', $id)),
+        ]);
 
         $query
             ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
@@ -43,6 +65,15 @@ class PersonelController extends Controller
             })
             ->when($filters['unit_organisasi_id'] ?? null, fn (Builder $query, int $id) => $query->where('unit_organisasi_id', $id))
             ->when($filters['pangkat_id'] ?? null, fn (Builder $query, int $id) => $query->where('pangkat_id', $id))
+            ->when($functionId, function (Builder $query, int $id): void {
+                $query->where(function (Builder $query) use ($id): void {
+                    $query
+                        ->whereHas('kualifikasi', fn (Builder $query) => $query->where('bidang_fungsi_id', $id))
+                        ->orWhereHas('riwayatJabatan', fn (Builder $query) => $query->where('bidang_fungsi_id', $id));
+                });
+            })
+            ->when($filters['jenis_kualifikasi_id'] ?? null, fn (Builder $query, int $id) => $query
+                ->whereHas('kualifikasi', fn (Builder $query) => $query->where('jenis_kualifikasi_id', $id)))
             ->when($filters['jenis_personel'] ?? null, fn (Builder $query, string $value) => $query->where('jenis_personel', $value))
             ->when($filters['status'] ?? null, fn (Builder $query, string $value) => $query->where('status', $value));
 
@@ -54,6 +85,9 @@ class PersonelController extends Controller
                 Pangkat::query()->select('urutan')->whereColumn('pangkat.id', 'personel.pangkat_id'),
                 $direction,
             ),
+            'jumlah_kualifikasi' => $query->orderBy('jumlah_kualifikasi_relevan', $direction),
+            'durasi_pengalaman' => $query->orderBy('durasi_pengalaman_hari', $direction),
+            'kualifikasi_terbaru' => $query->orderBy('tahun_kualifikasi_terbaru', $direction),
             default => $query->orderBy('nama_lengkap', $direction),
         };
 

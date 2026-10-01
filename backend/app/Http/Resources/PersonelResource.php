@@ -35,6 +35,16 @@ class PersonelResource extends JsonResource
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'jumlah_kualifikasi' => $this->whenCounted('kualifikasi'),
+            'ringkasan_relevan' => $this->when(
+                $this->resource->getAttribute('jumlah_kualifikasi_relevan') !== null,
+                fn () => [
+                    'jumlah_kualifikasi' => (int) $this->resource->getAttribute('jumlah_kualifikasi_relevan'),
+                    'durasi_pengalaman_hari' => (int) $this->resource->getAttribute('durasi_pengalaman_hari'),
+                    'tahun_kualifikasi_terbaru' => $this->resource->getAttribute('tahun_kualifikasi_terbaru')
+                        ? (int) $this->resource->getAttribute('tahun_kualifikasi_terbaru')
+                        : null,
+                ],
+            ),
             'jabatan_utama_aktif' => $this->whenLoaded('jabatanUtamaAktif', fn () => $this->jabatanUtamaAktif ? [
                 'id' => $this->jabatanUtamaAktif->id,
                 'nama_jabatan' => $this->jabatanUtamaAktif->nama_jabatan,
