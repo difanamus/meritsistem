@@ -17,15 +17,15 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## B. Repository dan Fondasi
 
-- [ ] Membuat struktur repository monorepo.
+- [x] Membuat struktur repository monorepo.
 - [x] Menginisialisasi Git.
 - [x] Membuat `.gitignore` yang sesuai.
-- [ ] Scaffold project Laravel pada `backend`.
-- [ ] Scaffold React + Vite pada `frontend`.
+- [x] Scaffold project Laravel pada `backend`.
+- [x] Scaffold React + Vite pada `frontend`.
 - [ ] Mengonfigurasi koneksi PostgreSQL lokal.
-- [ ] Menambahkan `.env.example` backend dan frontend tanpa secret.
-- [ ] Menetapkan format/lint backend.
-- [ ] Menetapkan format/lint frontend.
+- [x] Menambahkan `.env.example` backend dan frontend tanpa secret.
+- [x] Menetapkan format/lint backend.
+- [x] Menetapkan format/lint frontend.
 - [x] Membuat commit fondasi.
 
 ## C. Database dan Data Referensi

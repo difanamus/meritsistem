@@ -9,6 +9,7 @@ Soal CRUD.pdf
 
 # Temporary and generated files
 tmp/
+.tools/
 *.log
 coverage/
 
