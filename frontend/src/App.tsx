@@ -6,6 +6,8 @@ import { LoginPage } from './pages/LoginPage'
 import { PersonnelDetailPage } from './pages/PersonnelDetailPage'
 import { PersonnelFormPage } from './pages/PersonnelFormPage'
 import { PersonnelListPage } from './pages/PersonnelListPage'
+import { QualificationFormPage } from './pages/QualificationFormPage'
+import { MutationFormPage } from './pages/MutationFormPage'
 import './App.css'
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
               <Route path="/personel" element={<PersonnelListPage />} />
               <Route path="/personel/tambah" element={<PersonnelFormPage />} />
               <Route path="/personel/:id/edit" element={<PersonnelFormPage />} />
+              <Route path="/personel/:id/kualifikasi/tambah" element={<QualificationFormPage />} />
+              <Route path="/personel/:id/mutasi" element={<MutationFormPage />} />
               <Route path="/personel/:id" element={<PersonnelDetailPage />} />
             </Route>
           </Route>

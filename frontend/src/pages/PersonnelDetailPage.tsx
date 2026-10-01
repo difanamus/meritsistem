@@ -48,7 +48,7 @@ export function PersonnelDetailPage() {
       </section>
 
       <section className="profile-section reveal">
-        <div className="section-heading"><div><span className="eyebrow">Kompetensi</span><h2>Kualifikasi personel</h2></div><button className="secondary-cta" type="button">+ Tambah kualifikasi</button></div>
+        <div className="section-heading"><div><span className="eyebrow">Kompetensi</span><h2>Kualifikasi personel</h2></div><Link className="secondary-cta" to={`/personel/${person.id}/kualifikasi/tambah`}>+ Tambah kualifikasi</Link></div>
         <div className="qualification-grid">
           {person.kualifikasi?.map((item) => <article className="qualification-card" key={item.id}><span>{item.jenis_kualifikasi}</span><h3>{item.nama_kualifikasi}</h3><p>{item.bidang_fungsi ?? 'Kualifikasi umum'}</p><strong>{item.tahun ?? '—'}</strong></article>)}
           {!person.kualifikasi?.length && <div className="empty-inline">Belum ada data kualifikasi.</div>}
@@ -56,7 +56,7 @@ export function PersonnelDetailPage() {
       </section>
 
       <section className="profile-section reveal">
-        <div className="section-heading"><div><span className="eyebrow">Perjalanan karier</span><h2>Riwayat jabatan</h2></div><button className="secondary-cta" type="button">Proses mutasi</button></div>
+        <div className="section-heading"><div><span className="eyebrow">Perjalanan karier</span><h2>Riwayat jabatan</h2></div><Link className="secondary-cta" to={`/personel/${person.id}/mutasi`}>Proses mutasi</Link></div>
         <div className="timeline">
           {person.riwayat_jabatan?.map((item, index) => <article className="timeline-item" key={item.id}><div className="timeline-marker"><span>{String(index + 1).padStart(2, '0')}</span></div><div className="timeline-content"><div><span className="timeline-date">{new Date(item.tanggal_mulai).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })} — {item.tanggal_selesai ? new Date(item.tanggal_selesai).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : 'Sekarang'}</span><h3>{item.nama_jabatan}</h3><p>{relationName(item.unit_organisasi)} · {relationName(item.bidang_fungsi)}</p></div><span className={item.is_jabatan_utama ? 'position-kind main' : 'position-kind'}>{item.is_jabatan_utama ? 'Utama' : 'Tambahan'}</span></div></article>)}
         </div>

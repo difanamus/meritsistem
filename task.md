@@ -207,7 +207,7 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [ ] Membuat upload/download dokumen kualifikasi.
 - [ ] Membuat form CRUD riwayat jabatan.
 - [ ] Membuat upload/download SK.
-- [ ] Membuat UI pergantian jabatan dan mutasi.
+- [x] Membuat UI pergantian jabatan dan mutasi.
 - [ ] Membuat halaman pengguna dan scope untuk Admin.
 - [ ] Membuat halaman referensi minimum.
 - [x] Menampilkan validation error dari API secara jelas.
@@ -218,14 +218,14 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## N. Automated Test dan QA
 
-- [ ] Menjalankan seluruh backend test.
-- [ ] Memastikan test authentication lulus.
-- [ ] Memastikan test authorization/scope lulus.
-- [ ] Memastikan test CRUD lulus.
-- [ ] Memastikan test validation lulus.
-- [ ] Memastikan test file security lulus.
-- [ ] Memastikan test jabatan/mutasi transaction lulus.
-- [ ] Memastikan test filter/sorting lulus.
+- [x] Menjalankan seluruh backend test.
+- [x] Memastikan test authentication lulus.
+- [x] Memastikan test authorization/scope lulus.
+- [x] Memastikan test CRUD lulus.
+- [x] Memastikan test validation lulus.
+- [x] Memastikan test file security lulus.
+- [x] Memastikan test jabatan/mutasi transaction lulus.
+- [x] Memastikan test filter/sorting lulus.
 - [ ] Melakukan manual QA sebagai System Admin.
 - [ ] Melakukan manual QA sebagai Admin SSDM.
 - [ ] Melakukan manual QA sebagai Operator Polda.
