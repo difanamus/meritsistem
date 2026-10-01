@@ -35,3 +35,12 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Local AI coding-agent metadata (not required to install or run the app)
+.claude/
+.codex/
+.kiro/
+.grok/
+.agents/
+AGENTS.md
+CLAUDE.md

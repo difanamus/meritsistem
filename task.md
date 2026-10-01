@@ -173,6 +173,23 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Memastikan tidak ada skor/ranking tersembunyi.
 - [x] Membuat test query filter dan sorting.
 
+## K.1 Perluasan Profil Merit
+
+- [x] Menetapkan konsep riwayat penugasan operasi sebagai data faktual terpisah.
+- [x] Menetapkan konsep prestasi personel sebagai data faktual terpisah.
+- [x] Membedakan prestasi dari penghargaan/tanda kehormatan resmi.
+- [x] Menetapkan penilaian kinerja, assessment resmi, dan disiplin final sebagai pengembangan lanjutan.
+- [ ] Membuat migration, model, factory, dan seeder penugasan operasi.
+- [ ] Membuat CRUD, authorization scope, dokumen privat, filter, dan test penugasan operasi.
+- [ ] Membuat UI riwayat penugasan operasi pada profil personel.
+- [ ] Membuat migration, model, factory, dan seeder prestasi personel.
+- [ ] Membuat CRUD, authorization scope, dokumen privat, filter, dan test prestasi personel.
+- [ ] Membuat UI prestasi pada profil personel.
+- [ ] Membuat migration, model, factory, dan seeder penghargaan personel.
+- [ ] Membuat CRUD, authorization scope, dokumen privat, dan test penghargaan personel.
+- [ ] Membuat UI penghargaan pada profil personel.
+- [ ] Memperbarui OpenAPI, Postman, ERD, README, dan materi presentasi untuk modul tambahan.
+
 ## L. Error Handling dan API Quality
 
 - [ ] Menetapkan format respons sukses yang konsisten.

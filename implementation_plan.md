@@ -259,6 +259,31 @@ Keputusan keamanan akun:
 - `created_by` dan `updated_by` dipakai untuk audit, bukan untuk menentukan kepemilikan data.
 - Operator dapat mengelola semua data dalam scope-nya, bukan hanya data yang dibuatnya sendiri.
 
+### 4.8 Perluasan Profil Merit untuk Pembinaan Karier
+
+Perluasan berikut telah disepakati karena profil merit perlu menggambarkan lebih dari pendidikan dan riwayat jabatan. Seluruh data tetap disajikan sebagai fakta terverifikasi tanpa skor atau ranking otomatis.
+
+Prioritas implementasi prototype setelah CRUD inti stabil:
+
+1. **Riwayat penugasan operasi**
+   - Satu personel dapat memiliki banyak penugasan operasi.
+   - Data minimum: nama/kode operasi, jenis dan tingkat operasi, wilayah, peran/jabatan, Satgas/unit pelaksana, tanggal mulai/selesai, bidang/fungsi terkait, keterangan hasil, nomor surat perintah, dokumen PDF opsional, dan status verifikasi.
+   - Mendukung filter wilayah, tingkat operasi, bidang/fungsi, jumlah operasi, dan total durasi penugasan.
+2. **Prestasi personel**
+   - Mencakup prestasi olahraga, akademik, operasional, inovasi, pelayanan, dan kategori lain yang relevan.
+   - Data minimum: nama prestasi, kategori, tingkat, peringkat/hasil, penyelenggara, tanggal/tahun, peran individu/tim, bidang/fungsi terkait, sertifikat/piagam PDF opsional, dan status verifikasi.
+3. **Penghargaan dan tanda kehormatan**
+   - Dipisahkan dari prestasi karena merupakan pengakuan resmi dari institusi.
+   - Data minimum: nama penghargaan, pemberi, tingkat, nomor dan tanggal keputusan, alasan pemberian, serta dokumen PDF opsional.
+
+Pengembangan lanjutan setelah tiga modul di atas:
+
+- Riwayat penilaian kinerja per periode beserta hasil resmi dan dokumen pendukung.
+- Hasil assessment kompetensi resmi tanpa menyimpan data psikologi mentah.
+- Rekam disiplin yang sudah berkekuatan final, dengan authorization lebih ketat, audit akses, dan tanpa menampilkan dugaan/perkara yang belum final.
+
+Keterampilan bahasa, digital, brevet, lisensi, dan sertifikasi tetap ditempatkan sebagai jenis kualifikasi agar tidak membuat domain yang tumpang tindih. Data kesehatan/kesiapan fisik dan catatan subjektif pimpinan tidak menjadi bagian prototype karena sensitivitas, potensi bias, dan kebutuhan governance tambahan.
+
 ## 5. Model Data Awal
 
 Tabel utama yang direncanakan:
@@ -273,8 +298,11 @@ Tabel utama yang direncanakan:
 8. `personel`
 9. `kualifikasi_personel`
 10. `riwayat_jabatan`
-11. Tabel token Laravel Sanctum.
-12. Tabel audit log apabila implementasi inti telah stabil.
+11. `penugasan_operasi`
+12. `prestasi_personel`
+13. `penghargaan_personel`
+14. Tabel token Laravel Sanctum.
+15. Tabel audit log apabila implementasi inti telah stabil.
 
 ### 5.1 Relasi Utama
 
@@ -285,8 +313,13 @@ unit_organisasi  1 --- n user_scopes
 unit_organisasi  1 --- n personel
 personel          1 --- n kualifikasi_personel
 personel          1 --- n riwayat_jabatan
+personel          1 --- n penugasan_operasi
+personel          1 --- n prestasi_personel
+personel          1 --- n penghargaan_personel
 bidang_fungsi     1 --- n kualifikasi_personel
 bidang_fungsi     1 --- n riwayat_jabatan
+bidang_fungsi     1 --- n penugasan_operasi
+bidang_fungsi     1 --- n prestasi_personel
 ```
 
 ### 5.2 Dokumen PDF Opsional
