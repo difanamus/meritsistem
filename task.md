@@ -189,20 +189,20 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## M. Frontend
 
-- [ ] Menyiapkan API client dan environment URL.
-- [ ] Membuat state/session authentication.
-- [ ] Membuat halaman login.
-- [ ] Membuat protected route.
-- [ ] Membuat layout dan navigasi berdasarkan permission.
-- [ ] Membuat dashboard ringkas.
-- [ ] Membuat halaman daftar personel.
-- [ ] Membuat search, filter, sorting, dan pagination UI.
-- [ ] Membuat form tambah/edit personel.
-- [ ] Membuat halaman profil personel.
-- [ ] Menampilkan jabatan utama aktif.
-- [ ] Menampilkan penugasan tambahan aktif.
-- [ ] Menampilkan kualifikasi.
-- [ ] Menampilkan riwayat jabatan kronologis.
+- [x] Menyiapkan API client dan environment URL.
+- [x] Membuat state/session authentication.
+- [x] Membuat halaman login.
+- [x] Membuat protected route.
+- [x] Membuat layout dan navigasi berdasarkan permission.
+- [x] Membuat dashboard ringkas.
+- [x] Membuat halaman daftar personel.
+- [x] Membuat search, filter, sorting, dan pagination UI.
+- [x] Membuat form tambah/edit personel.
+- [x] Membuat halaman profil personel.
+- [x] Menampilkan jabatan utama aktif.
+- [x] Menampilkan penugasan tambahan aktif.
+- [x] Menampilkan kualifikasi.
+- [x] Menampilkan riwayat jabatan kronologis.
 - [ ] Membuat form CRUD kualifikasi.
 - [ ] Membuat upload/download dokumen kualifikasi.
 - [ ] Membuat form CRUD riwayat jabatan.
@@ -210,11 +210,11 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [ ] Membuat UI pergantian jabatan dan mutasi.
 - [ ] Membuat halaman pengguna dan scope untuk Admin.
 - [ ] Membuat halaman referensi minimum.
-- [ ] Menampilkan validation error dari API secara jelas.
+- [x] Menampilkan validation error dari API secara jelas.
 - [ ] Membuat halaman/state 401, 403, dan 404.
-- [ ] Memastikan UI responsif dan layak untuk demo.
-- [ ] Menjalankan lint frontend.
-- [ ] Menjalankan production build frontend.
+- [x] Memastikan UI responsif dan layak untuk demo.
+- [x] Menjalankan lint frontend.
+- [x] Menjalankan production build frontend.
 
 ## N. Automated Test dan QA
 
