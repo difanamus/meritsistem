@@ -112,20 +112,20 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 
 ## H. CRUD Kualifikasi
 
-- [ ] Membuat endpoint daftar kualifikasi personel.
-- [ ] Membuat endpoint tambah kualifikasi.
-- [ ] Membuat endpoint ubah kualifikasi.
-- [ ] Membuat endpoint soft delete kualifikasi.
-- [ ] Memvalidasi jenis dan nama kualifikasi.
-- [ ] Memvalidasi tanggal mulai/selesai.
-- [ ] Mendukung bidang/fungsi nullable untuk kualifikasi umum.
-- [ ] Mendukung dua kegiatan dengan nama sama pada waktu berbeda.
-- [ ] Menambahkan upload PDF opsional maksimal 5 MB.
-- [ ] Memvalidasi MIME dan ekstensi PDF.
-- [ ] Menyimpan file pada storage privat.
-- [ ] Membuat endpoint download berizin.
-- [ ] Menghapus/membersihkan file sesuai kebijakan soft delete.
-- [ ] Membuat test CRUD, upload, dan authorization kualifikasi.
+- [x] Membuat endpoint daftar kualifikasi personel.
+- [x] Membuat endpoint tambah kualifikasi.
+- [x] Membuat endpoint ubah kualifikasi.
+- [x] Membuat endpoint soft delete kualifikasi.
+- [x] Memvalidasi jenis dan nama kualifikasi.
+- [x] Memvalidasi tanggal mulai/selesai.
+- [x] Mendukung bidang/fungsi nullable untuk kualifikasi umum.
+- [x] Mendukung dua kegiatan dengan nama sama pada waktu berbeda.
+- [x] Menambahkan upload PDF opsional maksimal 5 MB.
+- [x] Memvalidasi MIME dan ekstensi PDF.
+- [x] Menyimpan file pada storage privat.
+- [x] Membuat endpoint download berizin.
+- [x] Menghapus/membersihkan file sesuai kebijakan soft delete.
+- [x] Membuat test CRUD, upload, dan authorization kualifikasi.
 
 ## I. CRUD Riwayat Jabatan
 
