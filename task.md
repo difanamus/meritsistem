@@ -211,7 +211,7 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [ ] Membuat halaman pengguna dan scope untuk Admin.
 - [ ] Membuat halaman referensi minimum.
 - [x] Menampilkan validation error dari API secara jelas.
-- [ ] Membuat halaman/state 401, 403, dan 404.
+- [x] Membuat halaman/state 401, 403, dan 404.
 - [x] Memastikan UI responsif dan layak untuk demo.
 - [x] Menjalankan lint frontend.
 - [x] Menjalankan production build frontend.
