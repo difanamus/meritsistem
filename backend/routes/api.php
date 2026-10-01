@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\KualifikasiPersonelController;
 use App\Http\Controllers\Api\V1\MutasiController;
 use App\Http\Controllers\Api\V1\PersonelController;
+use App\Http\Controllers\Api\V1\ReferenceOptionController;
 use App\Http\Controllers\Api\V1\RiwayatJabatanController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::apiResource('personel', PersonelController::class);
+        Route::get('/reference-options', ReferenceOptionController::class);
         Route::get('/personel/{personel}/kualifikasi', [KualifikasiPersonelController::class, 'index']);
         Route::post('/personel/{personel}/kualifikasi', [KualifikasiPersonelController::class, 'store']);
         Route::put('/kualifikasi/{kualifikasi}', [KualifikasiPersonelController::class, 'update']);
