@@ -26,7 +26,7 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [ ] Menambahkan `.env.example` backend dan frontend tanpa secret.
 - [ ] Menetapkan format/lint backend.
 - [ ] Menetapkan format/lint frontend.
-- [ ] Membuat commit fondasi.
+- [x] Membuat commit fondasi.
 
 ## C. Database dan Data Referensi
 
