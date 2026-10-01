@@ -57,11 +57,13 @@ Konfigurasi default development:
 
 ```text
 host: 127.0.0.1
-port: 5432
+host port: 5433 (diteruskan ke port PostgreSQL 5432 di container)
 database: merit_system
 username: merit
 password: merit_local_password
 ```
+
+Port host `5433` dipilih agar tidak bertabrakan dengan instalasi PostgreSQL native yang biasanya memakai `5432`. Binding hanya ke `127.0.0.1`, sehingga database development tidak diekspos ke jaringan lokal.
 
 Jika Docker Desktop belum dapat berjalan, backend dapat dikembangkan sementara dengan SQLite. Ubah `DB_CONNECTION=sqlite`, kosongkan variabel `DB_*` lainnya, lalu buat file `backend/database/database.sqlite`. PostgreSQL tetap menjadi target database aplikasi.
 
@@ -116,7 +118,7 @@ npm run lint
 npm run build
 ```
 
-Checkpoint terakhir: 43 test backend dengan 156 assertion lulus, serta lint dan production build frontend lulus.
+Checkpoint terakhir: 43 test backend dengan 156 assertion lulus pada SQLite in-memory maupun database test PostgreSQL 17. Lint dan production build frontend juga lulus.
 
 ## Aturan domain penting
 
@@ -139,7 +141,7 @@ Gunakan endpoint `POST /api/v1/auth/login`, simpan nilai `token`, lalu kirim hea
 ## Batasan prototype
 
 - CRUD pengguna dan master data administratif belum tersedia di UI.
-- PostgreSQL perlu diverifikasi pada mesin yang Docker Desktop atau service PostgreSQL-nya aktif.
+- Data penilaian kinerja, assessment resmi, dan disiplin final masih direncanakan sebagai pengembangan lanjutan dengan kontrol akses tambahan.
 - Audit trail penuh dan mekanisme restore soft-delete direncanakan untuk pengembangan berikutnya.
 
 Keputusan teknis lengkap dan checklist implementasi tersedia di `implementation_plan.md` dan `task.md`.

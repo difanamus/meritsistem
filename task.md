@@ -22,7 +22,7 @@ Checklist ini harus diperbarui selama pengerjaan. Centang `[x]` hanya setelah im
 - [x] Membuat `.gitignore` yang sesuai.
 - [x] Scaffold project Laravel pada `backend`.
 - [x] Scaffold React + Vite pada `frontend`.
-- [ ] Mengonfigurasi koneksi PostgreSQL lokal.
+- [x] Mengonfigurasi koneksi PostgreSQL lokal.
 - [x] Menambahkan `.env.example` backend dan frontend tanpa secret.
 - [x] Menetapkan format/lint backend.
 - [x] Menetapkan format/lint frontend.
