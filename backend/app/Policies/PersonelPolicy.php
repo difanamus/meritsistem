@@ -10,9 +10,13 @@ class PersonelPolicy
 {
     public function __construct(private readonly OrganizationalScopeService $scopeService) {}
 
-    public function before(User $user): ?bool
+    public function before(User $user, string $ability): ?bool
     {
         if (! $user->is_active) {
+            return false;
+        }
+
+        if ($ability === 'forceDelete') {
             return false;
         }
 
@@ -56,7 +60,7 @@ class PersonelPolicy
      */
     public function delete(User $user, Personel $personel): bool
     {
-        return $this->view($user, $personel);
+        return false;
     }
 
     /**
@@ -64,7 +68,7 @@ class PersonelPolicy
      */
     public function restore(User $user, Personel $personel): bool
     {
-        return $this->view($user, $personel);
+        return false;
     }
 
     /**

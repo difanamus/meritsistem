@@ -78,7 +78,7 @@ class MeritRecordController extends Controller
         DB::transaction(function () use ($request, $type, $record): void {
             $class = MeritProfileService::modelClass($type);
             $item = $class::query()->lockForUpdate()->findOrFail($record);
-            MeritProfileService::authorize($item, 'delete');
+            MeritProfileService::authorize($item, 'update');
             $item->update(['updated_by' => $request->user()->id]);
             $item->delete();
         });

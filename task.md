@@ -112,7 +112,7 @@ Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikas
 - [x] Membuat endpoint tambah personel.
 - [x] Membuat endpoint ubah personel.
 - [x] Membuat endpoint soft delete personel.
-- [ ] Membuat endpoint restore sesuai permission.
+- [x] Membuat endpoint restore sesuai permission.
 - [x] Memvalidasi field wajib.
 - [x] Memvalidasi nomor identitas sebagai string dan unik.
 - [x] Memvalidasi tanggal lahir.
@@ -357,6 +357,31 @@ Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikas
 - [ ] Memastikan link video dapat diakses penguji.
 
 ## S. Final Submission
+
+### Revisi pendaftaran dan administrasi (2 Oktober 2026)
+
+- [x] Satker menjadi satu combobox pencarian otomatis yang terbatas dan sesuai scope.
+- [x] Pendidikan umum wajib; pendidikan Polri wajib untuk POLRI, opsional bagi PNS; tanpa backfill data rekaan.
+- [x] Riwayat kualifikasi tambahan, jabatan terdahulu, operasi, prestasi, penghargaan opsional saat registrasi dan dapat dilengkapi dari profil.
+- [x] Registrasi atomik dengan PDF privat opsional serta rollback data/file.
+- [x] Placeholder foto belum tersedia (disabled, bukan upload aktif).
+- [x] Akun staff memakai personel database; nama server-derived, pemilik individu unik, scope independen; programmer eksternal boleh tanpa personel.
+- [x] Arsip personel admin-only dengan alasan, tidak mengubah tanggal karier; akun terkait dinonaktifkan/token dicabut.
+- [x] Daftar arsip berhalaman dan pemulihan admin; akun tidak otomatis aktif.
+- [x] Label urutan pangkat dan pengelompokan POLRI/PNS, bukan nilai merit.
+- [x] Daftar baku pangkat lengkap termasuk enam Tamtama dan 17 PNS; pemeliharaan dibatasi System Admin pada API/UI, seed ulang menjaga ID/status lama.
+- [x] Seeder demo opsional 100 personel sintetis, variasi pendidikan/karier/merit dan cabang organisasi; idempotensi, perlindungan data lama, rollback, serta larangan production diuji.
+- [x] Rancangan disiplin final dengan pembatasan akses/audit/versioning dicatat; belum modul input umum.
+- [x] Uji transaksi, validasi pendidikan/riwayat, linkage akun, role, arsip/restore; full suite SQLite dan PostgreSQL lulus.
+- [x] Verifikasi antarmuka baru di browser dan sinkronisasi kontrak OpenAPI/Postman.
+
+Checkpoint revisi 2 Oktober 2026: pendaftaran beserta pendidikan wajib dan riwayat opsional, pemilih Satker satu kolom, linkage akun personel, arsip/pemulihan admin, serta label pangkat selesai. Seluruh 153 test / 824 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 17 test frontend, lint, build, Pint, parsing OpenAPI/Postman lulus. Browser memverifikasi formulir registrasi, pendidikan Polri opsional untuk PNS, pencarian personel pada akun, dan daftar arsip. Foto masih placeholder; riwayat pelanggaran masih rancangan terbatas, bukan modul input. Data pengguna lama tidak diisi dengan pendidikan atau hubungan akun rekaan. Setup/clone bersih, pengujian Postman menyeluruh, publikasi repository, dan video tetap tahap finishing.
+
+Checklist final submission berikut tetap belum selesai hanya karena revisi di atas selesai.
+
+Verifikasi tambahan pangkat: 162 test / 865 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 17 test frontend, lint/build, dan Pint lulus. Browser Admin SSDM menampilkan pangkat Tamtama tanpa tombol tambah/edit/hapus. Seed pangkat diterapkan ke database lokal tanpa reset personel.
+
+Checkpoint dataset demo: `DemoPersonnelSeeder` tidak masuk seed instalasi standar; 100 data bertanda DEMO diterapkan ke database lokal (95 tampil dan 5 arsip), tanpa reset, penambahan akun, atau perubahan scope. Pendidikan wajib dan variasi riwayat tersedia; merit belum diverifikasi dan tanpa PDF palsu. Delapan test tambahan mencakup komposisi data, menjalankan ulang setelah edit/arsip, benturan identitas, prasyarat, rollback konflik unit, production guard, instalasi standar tetap kecil, pagination/filter/scope API. Seluruh 170 test / 947 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; Pint lulus. Ini dataset demonstrasi, bukan hasil uji beban nasional.
 
 - [ ] Memastikan aplikasi berjalan lokal.
 - [ ] Memastikan seluruh requirement wajib terpenuhi.

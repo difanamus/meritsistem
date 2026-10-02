@@ -44,6 +44,10 @@ class ReferenceController extends Controller
             $query->where('is_active', $filters['status'] === 'active');
         }
 
+        if ($referenceType === ReferenceType::Pangkat) {
+            $query->orderBy('jenis_personel')->orderBy('urutan');
+        }
+
         return ReferenceResource::collection($query->orderBy('nama')->orderBy('id')
             ->paginate($filters['per_page'] ?? 15)->withQueryString())
             ->additional(['success' => true, 'message' => 'Daftar referensi berhasil diambil.']);
@@ -79,7 +83,7 @@ class ReferenceController extends Controller
 
     public function destroy(string $type, int $reference, ReferenceAdministrationService $service): JsonResponse
     {
-        Gate::authorize('manage-references');
+        Gate::authorize('manage-reference', $type);
         $service->delete(ReferenceType::from($type), $reference);
 
         return response()->json(['success' => true, 'message' => 'Referensi berhasil dihapus.']);

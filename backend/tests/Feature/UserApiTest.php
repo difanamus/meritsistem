@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ScopeType;
 use App\Enums\UserRole;
+use App\Models\Personel;
 use App\Models\UnitOrganisasi;
 use App\Models\User;
 use App\Models\UserScope;
@@ -119,6 +120,7 @@ class UserApiTest extends TestCase
         Sanctum::actingAs($systemAdmin);
 
         $response = $this->putJson("/api/v1/users/{$operator->id}", [
+            'personel_id' => Personel::factory()->create(['nama_lengkap' => 'Operator Diperbarui'])->id,
             'name' => 'Operator Diperbarui',
             'email' => $operator->email,
             'password' => '',
@@ -260,6 +262,7 @@ class UserApiTest extends TestCase
     private function operatorPayload(UnitOrganisasi $unit): array
     {
         return [
+            'personel_id' => Personel::factory()->create(['nama_lengkap' => 'Operator Baru'])->id,
             'name' => 'Operator Baru',
             'email' => 'operator.baru@example.test',
             'password' => 'Rahasia12345',
@@ -274,5 +277,82 @@ class UserApiTest extends TestCase
                 'berlaku_sampai' => null,
             ]],
         ];
+    }
+
+    public function test_staff_account_requires_existing_personnel_and_name_is_derived_from_database(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::SystemAdmin]));
+        $payload = $this->operatorPayload(UnitOrganisasi::factory()->create());
+        $person = Personel::query()->findOrFail($payload['personel_id']);
+        $payload['name'] = 'Nama bebas tidak boleh dipakai';
+        $response = $this->postJson('/api/v1/users', $payload)->assertCreated()
+            ->assertJsonPath('data.name', $person->nama_lengkap)->assertJsonPath('data.personel.id', $person->id);
+        $this->assertDatabaseHas('users', ['id' => $response->json('data.id'), 'personel_id' => $person->id, 'name' => $person->nama_lengkap]);
+    }
+
+    public function test_personnel_cannot_have_two_accounts(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::SystemAdmin]));
+        $payload = $this->operatorPayload(UnitOrganisasi::factory()->create());
+        User::factory()->create(['personel_id' => $payload['personel_id']]);
+        $this->postJson('/api/v1/users', $payload)->assertUnprocessable()->assertJsonValidationErrors('personel_id');
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+    }
+
+    public function test_operator_creation_without_personnel_returns_422(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::AdminSsdm]));
+        $payload = $this->operatorPayload(UnitOrganisasi::factory()->create());
+        unset($payload['personel_id']);
+        $this->postJson('/api/v1/users', $payload)->assertUnprocessable()->assertJsonValidationErrors('personel_id');
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+    }
+
+    public function test_external_programmer_can_create_account_without_personnel(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::SystemAdmin]));
+        $this->postJson('/api/v1/users', ['name' => 'Programmer Eksternal', 'email' => 'programmer@example.test', 'password' => 'Rahasia12345', 'password_confirmation' => 'Rahasia12345', 'role' => 'system_admin', 'is_active' => true, 'scopes' => []])
+            ->assertCreated()->assertJsonPath('data.personel_id', null);
+        $this->assertDatabaseHas('users', ['email' => 'programmer@example.test', 'name' => 'Programmer Eksternal', 'personel_id' => null]);
+    }
+
+    public function test_linked_account_cannot_be_reassigned_to_another_personnel(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::SystemAdmin]));
+        $owner = Personel::factory()->create();
+        $account = User::factory()->create(['role' => UserRole::Operator, 'personel_id' => $owner->id]);
+        $payload = $this->operatorPayload(UnitOrganisasi::factory()->create());
+        $payload['email'] = $account->email;
+        $this->putJson("/api/v1/users/{$account->id}", $payload)->assertUnprocessable()->assertJsonValidationErrors('personel_id');
+        $this->assertSame($owner->id, $account->refresh()->personel_id);
+    }
+
+    public function test_archived_personnel_account_can_remain_inactive_but_cannot_be_reactivated(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::SystemAdmin]));
+        $person = Personel::factory()->create();
+        $account = User::factory()->create(['role' => UserRole::Operator, 'personel_id' => $person->id, 'is_active' => false]);
+        $person->delete();
+        $payload = $this->operatorPayload(UnitOrganisasi::factory()->create());
+        $payload['personel_id'] = $person->id;
+        $payload['email'] = $account->email;
+        $payload['is_active'] = false;
+        $this->putJson("/api/v1/users/{$account->id}", $payload)->assertOk()->assertJsonPath('data.is_active', false);
+        $payload['is_active'] = true;
+        $this->putJson("/api/v1/users/{$account->id}", $payload)->assertUnprocessable()->assertJsonValidationErrors('personel_id');
+        $this->assertFalse($account->refresh()->is_active);
+    }
+
+    public function test_personnel_picker_is_admin_only_bounded_and_excludes_archived_or_inactive_personnel(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::SystemAdmin]));
+        Personel::factory()->count(28)->create(['nama_lengkap' => 'Personel Pilihan']);
+        Personel::factory()->create(['nama_lengkap' => 'Personel Nonaktif', 'status' => 'pensiun']);
+        $archived = Personel::factory()->create(['nama_lengkap' => 'Personel Arsip']);
+        $archived->delete();
+        $this->getJson('/api/v1/personel-options?search=Personel')->assertOk()->assertJsonCount(25, 'data')->assertJsonMissing(['nama_lengkap' => 'Personel Arsip'])->assertJsonMissing(['nama_lengkap' => 'Personel Nonaktif']);
+        $this->getJson('/api/v1/personel-options?search=Pe')->assertUnprocessable()->assertJsonValidationErrors('search');
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::Operator]));
+        $this->getJson('/api/v1/personel-options?search=Personel')->assertForbidden();
     }
 }

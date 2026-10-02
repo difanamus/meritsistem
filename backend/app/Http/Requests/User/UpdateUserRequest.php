@@ -20,8 +20,22 @@ class UpdateUserRequest extends FormRequest
     /** @return array<string, ValidationRule|array<mixed>|string> */
     public function rules(): array
     {
+        $account = $this->route('user');
+        $personRules = ['required_unless:role,system_admin', 'nullable', 'integer', Rule::unique('users', 'personel_id')->ignore($account)];
+        if ($account->personel_id !== null) {
+            $personRules[] = 'required';
+            $personRules[] = Rule::in([$account->personel_id]);
+        }
+        $personRules[] = Rule::exists('personel', 'id')->where(fn ($query) => $query->where(function ($query) use ($account): void {
+            $query->where(fn ($query) => $query->where('status', 'aktif')->whereNull('deleted_at'));
+            if (! $this->boolean('is_active') && $account->personel_id !== null) {
+                $query->orWhere('id', $account->personel_id);
+            }
+        }));
+
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required_without:personel_id', 'nullable', 'string', 'max:255'],
+            'personel_id' => $personRules,
             'email' => [
                 'required',
                 'string',

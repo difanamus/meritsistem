@@ -22,7 +22,8 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required_without:personel_id', 'nullable', 'string', 'max:255'],
+            'personel_id' => ['required_unless:role,system_admin', 'nullable', 'integer', Rule::exists('personel', 'id')->where('status', 'aktif')->whereNull('deleted_at'), Rule::unique('users', 'personel_id')],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(10)->letters()->numbers()],
             'role' => ['required', Rule::enum(UserRole::class)],

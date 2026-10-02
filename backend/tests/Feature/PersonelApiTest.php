@@ -244,7 +244,7 @@ class PersonelApiTest extends TestCase
         $this->assertNotNull($position->refresh()->tanggal_selesai);
     }
 
-    public function test_delete_soft_deletes_personnel_and_closes_active_primary_position(): void
+    public function test_archive_preserves_active_primary_position(): void
     {
         $admin = User::factory()->create(['role' => UserRole::AdminSsdm]);
         Sanctum::actingAs($admin);
@@ -258,12 +258,12 @@ class PersonelApiTest extends TestCase
             'is_jabatan_utama' => true,
         ]);
 
-        $this->deleteJson("/api/v1/personel/{$personel->id}")
+        $this->deleteJson("/api/v1/personel/{$personel->id}", ['alasan_arsip' => 'Duplikat pencatatan'])
             ->assertOk()
             ->assertJsonPath('success', true);
 
         $this->assertSoftDeleted($personel);
-        $this->assertNotNull($position->refresh()->tanggal_selesai);
+        $this->assertNull($position->refresh()->tanggal_selesai);
     }
 
     public function test_function_filter_returns_factual_qualification_and_experience_summary_without_score(): void
@@ -329,7 +329,13 @@ class PersonelApiTest extends TestCase
         BidangFungsi $bidang,
         JenisPenugasan $jenisPenugasan,
     ): array {
+        foreach (['PENDIDIKAN_UMUM', 'PENDIDIKAN_POLRI'] as $code) {
+            JenisKualifikasi::factory()->create(['kode' => $code]);
+        }
+
         return [
+            'pendidikan_umum' => ['nama_kualifikasi' => 'SMA', 'tahun' => 2008],
+            'pendidikan_polri' => ['nama_kualifikasi' => 'SPN', 'tahun' => 2009],
             'jenis_personel' => 'polri',
             'nomor_identitas' => '12345678',
             'nama_lengkap' => 'Agus Setiawan',

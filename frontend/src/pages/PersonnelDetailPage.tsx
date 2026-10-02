@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
-import { HistoryDelete, PositionSection, QualificationSection } from '../components/PersonnelHistory'
+import { PositionSection, QualificationSection } from '../components/PersonnelHistory'
+import { useAuth } from '../auth/useAuth'
 import { MeritSection } from '../components/MeritSection'
 import { ApiError, apiRequest, peekApiCache } from '../lib/api'
 import type { Personnel, Position } from '../types'
@@ -29,6 +30,10 @@ export function PersonnelDetailPage() {
 
 function PersonnelDetailContent({ id }: { id: string | undefined }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const [archiveReason, setArchiveReason] = useState('')
+  const [confirmArchive, setConfirmArchive] = useState(false)
+  const [archiving, setArchiving] = useState(false)
   const location = useLocation()
   const cachedProfile = id ? peekApiCache<{ data: Personnel }>(`/personel/${id}`) : null
   const [revision, setRevision] = useState(0)
@@ -108,11 +113,17 @@ function PersonnelDetailContent({ id }: { id: string | undefined }) {
         {visitedTabs.includes(item.id) && item.id === 'prestasi' && <MeritSection personnelId={person.id} kind="prestasi" />}
         {visitedTabs.includes(item.id) && item.id === 'penghargaan' && <MeritSection personnelId={person.id} kind="penghargaan" />}
       </div>)}
-      <section className="profile-section">
-        <div className="content-shell"><div className="content-core dashboard-panel"><h2>Arsipkan data personel</h2><p className="dashboard-note">Hapus mengarsipkan profil dari daftar aktif dan menutup jabatan utama yang masih berjalan. Riwayat serta dokumen tetap tersimpan; pemulihan belum tersedia pada UI.</p>
-          <HistoryDelete kind="personel" name={person.nama_lengkap} path={`/personel/${person.id}`} onDeleted={() => navigate('/personel', { state: { message: 'Data personel berhasil diarsipkan.' } })} />
+      {user?.role !== 'operator' && <section className="profile-section">
+        <div className="content-shell"><div className="content-core dashboard-panel"><h2>Arsipkan data personel</h2><p className="dashboard-note">Untuk duplikat atau koreksi pencatatan, bukan pensiun atau mutasi. Riwayat, dokumen, dan tanggal karier tetap utuh. Akun terkait dinonaktifkan; Admin dapat memulihkan melalui daftar Arsip.</p>
+          {!confirmArchive ? <button type="button" className="danger-action" onClick={() => setConfirmArchive(true)}>Arsipkan personel</button> : <form className="archive-controls" onSubmit={async (event) => {
+            event.preventDefault(); setArchiving(true); setError('')
+            try { await apiRequest(`/personel/${person.id}`, { method: 'DELETE', body: JSON.stringify({ alasan_arsip: archiveReason }) }); navigate('/personel', { state: { message: 'Personel diarsipkan. Riwayat karier tidak diubah.' } }) }
+            catch (exception) { setError(exception instanceof ApiError ? exception.message : 'Pengarsipan gagal.') }
+            finally { setArchiving(false) }
+          }}><label>Alasan pengarsipan<textarea required minLength={5} maxLength={1000} value={archiveReason} onChange={(event) => setArchiveReason(event.target.value)} /></label><p>Arsipkan {person.nama_lengkap}? Data tidak dihapus permanen.</p><div className="table-actions"><button className="danger-action" disabled={archiving}>{archiving ? 'Mengarsipkan…' : 'Ya, arsipkan'}</button><button type="button" className="text-action" onClick={() => setConfirmArchive(false)} disabled={archiving}>Batal</button></div></form>}
+          {error && <div className="alert error" role="alert">{error}</div>}
         </div></div>
-      </section>
+      </section>}
     </div>
   )
 }

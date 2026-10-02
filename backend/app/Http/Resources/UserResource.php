@@ -19,6 +19,11 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'personel_id' => $this->personel_id,
+            'personel' => $this->whenLoaded('personel', fn () => $this->personel ? [
+                'id' => $this->personel->id, 'nama_lengkap' => $this->personel->nama_lengkap,
+                'nomor_identitas' => $this->personel->nomor_identitas, 'archived_at' => $this->personel->deleted_at?->toISOString(),
+            ] : null),
             'email' => $this->email,
             'role' => $this->role->value,
             'role_label' => $this->role->label(),

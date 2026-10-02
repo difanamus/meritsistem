@@ -28,7 +28,13 @@ class SaveMeritRecordRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $required = $this->record ? 'sometimes' : 'required';
+        return self::recordRules($this->route('type'), $this->record !== null);
+    }
+
+    /** @return array<string, mixed> */
+    public static function recordRules(string $type, bool $updating = false): array
+    {
+        $required = $updating ? 'sometimes' : 'required';
         $rules = [
             'nama' => [$required, 'required', 'string', 'max:255'],
             'tingkat' => [$required, 'required', Rule::in(['satker', 'kabupaten_kota', 'provinsi', 'nasional', 'internasional'])],
@@ -39,7 +45,7 @@ class SaveMeritRecordRequest extends FormRequest
             'status_verifikasi' => ['prohibited'], 'verified_by' => ['prohibited'], 'verified_at' => ['prohibited'],
             'personel_id' => ['prohibited'], 'created_by' => ['prohibited'], 'updated_by' => ['prohibited'],
         ];
-        $domain = match ($this->route('type')) {
+        $domain = match ($type) {
             'penugasan-operasi' => [
                 'kode_operasi' => ['sometimes', 'nullable', 'string', 'max:100'],
                 'jenis_operasi' => [$required, 'required', 'string', 'max:100'],

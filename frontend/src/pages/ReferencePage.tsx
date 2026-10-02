@@ -54,9 +54,9 @@ const blankDraft = (): Draft => ({
 
 export function ReferencePage() {
   const { user } = useAuth()
-  const canManage = user?.role === 'system_admin' || user?.role === 'admin_ssdm'
   const [params, setParams] = useSearchParams()
   const type = (categories.find((item) => item.key === params.get('type'))?.key ?? 'unit-organisasi') as Category
+  const canManage = user?.role === 'system_admin' || (type !== 'pangkat' && user?.role === 'admin_ssdm')
   const label = categories.find((item) => item.key === type)!.label
   const [records, setRecords] = useState<ReferenceRecord[]>([])
   const [meta, setMeta] = useState<PaginationMeta | null>(null)
@@ -226,7 +226,7 @@ export function ReferencePage() {
     <nav className="reference-tabs" aria-label="Kategori referensi">
       {categories.map((item) => <button key={item.key} type="button" aria-pressed={type === item.key} className={type === item.key ? 'active' : ''} onClick={() => switchCategory(item.key)}>{item.label}</button>)}
     </nav>
-    {!canManage && <div className="transaction-note"><strong>Akses baca</strong><span>Perubahan referensi dikelola oleh System Admin atau Admin SSDM.</span></div>}
+    {type === 'pangkat' ? <div className="transaction-note"><strong>Daftar pangkat baku</strong><span>Tamtama, Bintara, Perwira, dan pangkat PNS disediakan oleh sistem. Pemeliharaan daftar hanya oleh System Admin, bukan administrasi harian. Urutan bukan skor merit.</span></div> : !canManage && <div className="transaction-note"><strong>Akses baca</strong><span>Perubahan referensi dikelola oleh System Admin atau Admin SSDM.</span></div>}
     {notice && <div className="alert success" role="status">{notice}</div>}
     {error && <div className="alert error" role="alert">{error}</div>}
 
@@ -242,13 +242,13 @@ export function ReferencePage() {
         </>}
         {type === 'pangkat' && <>
           <label><span>Jenis personel</span><select value={draft.jenis_personel} onChange={(event) => field('jenis_personel', event.target.value)}><option value="polri">POLRI</option><option value="pns">PNS</option></select>{fieldError('jenis_personel') && <small>{fieldError('jenis_personel')}</small>}</label>
-          <label><span>Urutan pangkat</span><input required type="number" min="0" max="65535" value={draft.urutan} onChange={(event) => field('urutan', event.target.value)}/>{fieldError('urutan') && <small>{fieldError('urutan')}</small>}</label>
+          <label><span>Urutan pangkat</span><input required type="number" min="0" max="65535" value={draft.urutan} onChange={(event) => field('urutan', event.target.value)}/><small>Untuk pengurutan dalam jenis personel yang sama, bukan skor merit.</small>{fieldError('urutan') && <small>{fieldError('urutan')}</small>}</label>
         </>}
         {type === 'bidang-fungsi' && <label className="wide"><span>Deskripsi (opsional)</span><textarea maxLength={2000} rows={3} value={draft.deskripsi} onChange={(event) => field('deskripsi', event.target.value)}/>{fieldError('deskripsi') && <small>{fieldError('deskripsi')}</small>}</label>}
       </div><div className="form-actions"><button type="button" className="secondary-cta" disabled={saving} onClick={() => setEditing(null)}>Batal</button><button className="primary-cta" disabled={saving}><span>{saving ? 'Menyimpan…' : 'Simpan referensi'}</span><span className="cta-icon">✓</span></button></div></form>
     </div></section>}
 
-    {deleteTarget && <div className="reference-confirm" role="alert"><div><strong>Hapus {deleteTarget.nama}?</strong><p>Penghapusan ditolak bila referensi masih dipakai. Gunakan status nonaktif untuk menghentikan penggunaan baru.</p></div><button type="button" className="secondary-cta" disabled={saving} onClick={() => setDeleteTarget(null)}>Batal</button><button type="button" className="danger-action" disabled={saving} onClick={() => void deleteRecord()}>{saving ? 'Memproses…' : 'Ya, hapus'}</button></div>}
+    {deleteTarget && canManage && <div className="reference-confirm" role="alert"><div><strong>Hapus {deleteTarget.nama}?</strong><p>Penghapusan ditolak bila referensi masih dipakai. Gunakan status nonaktif untuk menghentikan penggunaan baru.</p></div><button type="button" className="secondary-cta" disabled={saving} onClick={() => setDeleteTarget(null)}>Batal</button><button type="button" className="danger-action" disabled={saving} onClick={() => void deleteRecord()}>{saving ? 'Memproses…' : 'Ya, hapus'}</button></div>}
 
     <section className="content-shell"><div className="content-core">
       <div className="reference-list-heading"><h2>{label}</h2><span>{meta?.total ?? '—'} data</span></div>
@@ -257,7 +257,7 @@ export function ReferencePage() {
         <select aria-label="Filter status referensi" value={params.get('status') ?? ''} onChange={(event) => setFilter('status', event.target.value)}><option value="">Semua status</option><option value="active">Aktif</option><option value="inactive">Nonaktif</option></select>
       </div>
       <div className="data-table-wrap"><table className="data-table reference-table">
-        <thead><tr><th>Kode</th><th>Nama</th><th>{type === 'unit-organisasi' ? 'Jenis / Induk' : type === 'pangkat' ? 'Jenis / Urutan' : 'Keterangan'}</th><th>Status</th>{canManage && <th>Aksi</th>}</tr></thead>
+        <thead><tr><th>Kode</th><th>Nama</th><th>{type === 'unit-organisasi' ? 'Jenis / Induk' : type === 'pangkat' ? 'Jenis personel / Urutan pangkat' : 'Keterangan'}</th><th>Status</th>{canManage && <th>Aksi</th>}</tr></thead>
         <tbody>
           {loading && <tr className="skeleton-row"><td colSpan={canManage ? 5 : 4}><span/></td></tr>}
           {!loading && records.map((record) => <tr key={record.id}>

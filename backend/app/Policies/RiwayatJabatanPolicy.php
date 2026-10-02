@@ -44,7 +44,7 @@ class RiwayatJabatanPolicy
      */
     public function delete(User $user, RiwayatJabatan $riwayatJabatan): bool
     {
-        return $user->can('delete', $riwayatJabatan->personel);
+        return $riwayatJabatan->personel !== null && $user->can('update', $riwayatJabatan->personel);
     }
 
     /**

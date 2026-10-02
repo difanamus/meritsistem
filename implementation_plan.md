@@ -653,6 +653,21 @@ Proyek dianggap selesai ketika:
 
 ## 17. Batasan dan Pengembangan Lanjutan
 
+### Penyesuaian pendaftaran dan administrasi — 2 Oktober 2026
+
+- Pemilih Satker satu combobox dengan pencarian otomatis minimal 3 karakter, debounce, hasil maksimum 25 sesuai scope; tidak lagi input pencarian dan select terpisah.
+- Pendidikan umum wajib pada registrasi; pendidikan Polri wajib hanya untuk POLRI, opsional bagi PNS. Disimpan pada tabel riwayat kualifikasi (nama dan tahun pendidikan wajib), tidak mengisi data lama dengan riwayat rekaan.
+- Registrasi menampilkan tombol tambah kualifikasi tambahan, riwayat jabatan terdahulu, operasi, prestasi, dan penghargaan. Jika tidak diklik, tidak ada record kosong. Masing-masing maksimum 20 riwayat per pengiriman; penambahan lanjutan tetap lewat profil.
+- Semua data registrasi dan PDF privat opsional disimpan atomik; file baru dibersihkan jika gagal. Jabatan terdahulu harus selesai dan periode jabatan utama tidak boleh tumpang tindih.
+- Foto hanya field disabled bertanda belum tersedia. Tidak ada upload foto backend.
+- Akun staff baru wajib memilih personel aktif dari database; `users.personel_id` nullable unik untuk mengakomodasi programmer eksternal. Nama diambil dari personel; pemilik akun terhubung tidak boleh dialihkan ke individu lain. Scope terpisah dari penempatan. Akun staff lama wajib dilengkapi saat diedit, tidak ditebak/backfill otomatis.
+- Arsip personel admin-only, alasan wajib, tidak mengubah tanggal/riwayat karier. Akun terkait dinonaktifkan beserta scope/token, dengan pemeriksaan kewenangan kelola akun. Pemulihan admin melalui daftar Arsip tidak otomatis mengaktifkan kembali akun. Nomor identitas tetap unik termasuk arsip.
+- Label pangkat menjadi jenis personel/urutan pangkat; sorting dikelompokkan POLRI/PNS, bukan perbandingan skor. Daftar baku mencakup 22 pangkat POLRI (termasuk enam Tamtama) dan 17 pangkat PNS; Admin SSDM/Operator hanya membaca dan memilih, pemeliharaan oleh System Admin. Seed ulang menjaga ID, status nonaktif, dan soft delete yang ada.
+- Dataset tambahan melalui `DemoPersonnelSeeder` opsional, local/testing saja: 100 personel sintetis bertanda DEMO, lintas pangkat/pendidikan/fungsi/unit, riwayat minimal sampai lengkap, 85 aktif/5 nonaktif/10 pensiun (5 arsip), operasi/prestasi/penghargaan tanpa verifikasi rekaan. Dua cabang organisasi fiktif dan Satker contoh mendukung demo scope. Tidak menimpa data/riwayat lama, membuat akun/PDF, atau memperluas akses; transaksi rollback saat konflik dan idempotensi diuji. Ini bukan uji kapasitas nasional.
+- Rekam disiplin hanya rancangan: putusan/sanksi final, dokumen privat, role khusus, audit akses, versi/pembatalan putusan, tanpa skor negatif otomatis. Modul input belum diimplementasikan sebelum governance siap.
+
+Penyesuaian ini tidak mengubah ketentuan ujian: aplikasi tetap berjalan lokal, REST API terdokumentasi, data demonstrasi fiktif, dan finishing/video/pengumpulan tetap checkpoint tersendiri.
+
 Yang tidak menjadi prioritas sebelum requirement wajib selesai:
 
 - Penilaian/ranking otomatis kelayakan personel.

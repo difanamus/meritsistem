@@ -30,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('view-system-status', fn (User $user): bool => $user->is_active && $user->role === UserRole::SystemAdmin);
         Gate::define('manage-references', fn (User $user): bool => $user->is_active
             && in_array($user->role, [UserRole::SystemAdmin, UserRole::AdminSsdm], true));
+        Gate::define('manage-reference', fn (User $user, string $type): bool => $type === 'pangkat'
+            ? $user->is_active && $user->role === UserRole::SystemAdmin
+            : $user->can('manage-references'));
         Model::preventLazyLoading(! $this->app->isProduction());
 
         RateLimiter::for('login', function (Request $request): Limit {

@@ -66,7 +66,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Operator Demo Postman\",\n  \"email\": \"operator.demo@example.test\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\",\n  \"role\": \"operator\",\n  \"is_active\": true,\n  \"scopes\": [\n    {\n      \"unit_organisasi_id\": {{unit_id}},\n      \"scope_type\": \"unit_and_descendants\",\n      \"is_active\": true,\n      \"berlaku_mulai\": \"2026-01-01\",\n      \"berlaku_sampai\": null\n    }\n  ]\n}"
+              "raw": "{\n  \"personel_id\": {{personel_id}},\n  \"email\": \"operator.demo@example.test\",\n  \"password\": \"Password123!\",\n  \"password_confirmation\": \"Password123!\",\n  \"role\": \"operator\",\n  \"is_active\": true,\n  \"scopes\": [\n    {\n      \"unit_organisasi_id\": {{unit_id}},\n      \"scope_type\": \"unit_and_descendants\",\n      \"is_active\": true,\n      \"berlaku_mulai\": \"2026-01-01\",\n      \"berlaku_sampai\": null\n    }\n  ]\n}"
             },
             "url": "{{base_url}}/users"
           }
@@ -78,7 +78,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Operator Demo Diperbarui\",\n  \"email\": \"operator.demo@example.test\",\n  \"password\": \"\",\n  \"password_confirmation\": \"\",\n  \"role\": \"operator\",\n  \"is_active\": true,\n  \"scopes\": [\n    {\n      \"unit_organisasi_id\": {{unit_id}},\n      \"scope_type\": \"own_unit\",\n      \"is_active\": true,\n      \"berlaku_mulai\": null,\n      \"berlaku_sampai\": null\n    }\n  ]\n}"
+              "raw": "{\n  \"personel_id\": {{personel_id}},\n  \"email\": \"operator.demo@example.test\",\n  \"password\": \"\",\n  \"password_confirmation\": \"\",\n  \"role\": \"operator\",\n  \"is_active\": true,\n  \"scopes\": [\n    {\n      \"unit_organisasi_id\": {{unit_id}},\n      \"scope_type\": \"own_unit\",\n      \"is_active\": true,\n      \"berlaku_mulai\": null,\n      \"berlaku_sampai\": null\n    }\n  ]\n}"
             },
             "url": "{{base_url}}/users/{{user_id}}"
           }
@@ -115,7 +115,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jenis_personel\": \"polri\",\n  \"nomor_identitas\": \"99001122\",\n  \"nama_lengkap\": \"Personel Demo Postman\",\n  \"pangkat_id\": {{pangkat_id}},\n  \"tempat_lahir\": \"Bengkulu\",\n  \"tanggal_lahir\": \"1990-01-01\",\n  \"unit_organisasi_id\": {{unit_id}},\n  \"status\": \"aktif\",\n  \"jabatan_utama\": {\n    \"nama_jabatan\": \"Banit Sat Intelkam\",\n    \"bidang_fungsi_id\": {{bidang_fungsi_id}},\n    \"jenis_penugasan_id\": {{jenis_penugasan_id}},\n    \"tanggal_mulai\": \"2026-01-01\"\n  }\n}"
+              "raw": "{\n  \"jenis_personel\": \"polri\",\n  \"nomor_identitas\": \"99001122\",\n  \"nama_lengkap\": \"Personel Demo Postman\",\n  \"pangkat_id\": {{pangkat_id}},\n  \"tempat_lahir\": \"Bengkulu\",\n  \"tanggal_lahir\": \"1990-01-01\",\n  \"unit_organisasi_id\": {{unit_id}},\n  \"status\": \"aktif\",\n  \"pendidikan_umum\": {\"nama_kualifikasi\": \"SMA Demo\", \"tahun\": 2008},\n  \"pendidikan_polri\": {\"nama_kualifikasi\": \"SPN Demo\", \"tahun\": 2009},\n  \"jabatan_utama\": {\n    \"nama_jabatan\": \"Banit Sat Intelkam\",\n    \"bidang_fungsi_id\": {{bidang_fungsi_id}},\n    \"jenis_penugasan_id\": {{jenis_penugasan_id}},\n    \"tanggal_mulai\": \"2026-01-01\"\n  }\n}"
             },
             "url": "{{base_url}}/personel"
           }
@@ -129,7 +129,10 @@
             "url": "{{base_url}}/personel/{{personel_id}}"
           }
         },
-        { "name": "Soft Delete", "request": { "method": "DELETE", "url": "{{base_url}}/personel/{{personel_id}}" } }
+        { "name": "Arsipkan dengan alasan (Admin)", "request": { "method": "DELETE", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"alasan_arsip\":\"Duplikat pencatatan demo\"}"}, "url": "{{base_url}}/personel/{{personel_id}}" } },
+        { "name": "Daftar Arsip (Admin)", "request": { "method": "GET", "url": "{{base_url}}/personel?arsip=1&per_page=10" } },
+        { "name": "Pulihkan Arsip (Admin)", "request": { "method": "POST", "url": "{{base_url}}/personel/{{personel_id}}/restore" } },
+        { "name": "Cari Pemilik Akun (Admin)", "request": { "method": "GET", "url": "{{base_url}}/personel-options?search=Agus" } }
       ]
     },
     {
@@ -302,6 +305,7 @@
         },
         {
           "name": "Pangkat",
+          "description": "Daftar pangkat baku. GET dapat dipakai semua role; POST/PUT/DELETE hanya System Admin. Admin SSDM dan Operator menerima 403 untuk perubahan pangkat.",
           "item": [
             {
               "name": "Daftar + Filter",

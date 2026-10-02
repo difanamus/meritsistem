@@ -26,6 +26,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'status',
     'created_by',
     'updated_by',
+    'alasan_arsip',
+    'archived_by',
 ])]
 class Personel extends Model
 {

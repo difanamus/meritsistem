@@ -16,6 +16,7 @@ interface ScopeDraft {
 }
 
 interface UserForm {
+  personel_id: string
   name: string
   email: string
   password: string
@@ -26,7 +27,7 @@ interface UserForm {
 }
 
 const emptyScope = (): ScopeDraft => ({ unit_organisasi_id: '', scope_type: 'own_unit', is_active: true, berlaku_mulai: '', berlaku_sampai: '' })
-const initialForm: UserForm = { name: '', email: '', password: '', password_confirmation: '', role: 'operator', is_active: true, scopes: [emptyScope()] }
+const initialForm: UserForm = { personel_id: '', name: '', email: '', password: '', password_confirmation: '', role: 'operator', is_active: true, scopes: [emptyScope()] }
 
 export function UserFormPage() {
   const { id } = useParams()
@@ -38,12 +39,15 @@ export function UserFormPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [errors, setErrors] = useState<Record<string, string[]>>({})
+  const [currentPerson, setCurrentPerson] = useState<ReferenceItem | null>(null)
+  const [linkedExisting, setLinkedExisting] = useState(false)
 
   useEffect(() => {
     document.title = `${isEdit ? 'Edit' : 'Tambah'} Pengguna · Merit SDM POLRI`
     if (!id) return
     void apiRequest<{ data: User }>(`/users/${id}`)
-      .then((response) => setForm({
+      .then((response) => { setLinkedExisting(Boolean(response.data.personel_id)); setCurrentPerson(response.data.personel ? { id: response.data.personel.id, nama: response.data.personel.nama_lengkap, kode: response.data.personel.nomor_identitas } : null); setForm({
+        personel_id: response.data.personel_id ? String(response.data.personel_id) : '',
         name: response.data.name,
         email: response.data.email,
         password: '',
@@ -58,7 +62,7 @@ export function UserFormPage() {
           berlaku_mulai: scope.berlaku_mulai ?? '',
           berlaku_sampai: scope.berlaku_sampai ?? '',
         })) : [emptyScope()],
-      }))
+      }) })
       .catch((exception) => setError(exception instanceof ApiError ? exception.message : 'Data pengguna tidak dapat dimuat.'))
       .finally(() => setLoading(false))
   }, [id, isEdit])
@@ -77,6 +81,7 @@ export function UserFormPage() {
     setErrors({})
     const payload = {
       ...form,
+      personel_id: form.personel_id ? Number(form.personel_id) : null,
       scopes: form.role === 'operator' ? form.scopes.map((scope) => ({ unit_organisasi_id: Number(scope.unit_organisasi_id), scope_type: scope.scope_type, is_active: scope.is_active, berlaku_mulai: scope.berlaku_mulai || null, berlaku_sampai: scope.berlaku_sampai || null })) : [],
     }
     try {
@@ -100,7 +105,9 @@ export function UserFormPage() {
     <form onSubmit={handleSubmit} className="person-form">
       {error && <div className="alert error full-span">{error}</div>}
       <section className="form-section-shell reveal delay-one"><div className="form-section-core"><div className="form-section-heading"><span>01</span><div><h2>Identitas akun</h2><p>Informasi untuk mengenali dan mengautentikasi pengguna.</p></div></div><div className="form-grid">
-        <label className="wide"><span>Nama pengguna</span><input value={form.name} onChange={(event) => setField('name', event.target.value)} required/>{fieldError('name') && <small>{fieldError('name')}</small>}</label>
+        <UnitSearchSelect source="personel" label={form.role === 'system_admin' ? 'Personel terkait (opsional untuk programmer)' : 'Personel pemilik akun'} value={form.personel_id} current={currentPerson} disabled={linkedExisting} required={form.role !== 'system_admin'} error={fieldError('personel_id')} onChange={(value, person) => { setCurrentPerson(person ?? null); setForm((current) => ({ ...current, personel_id: value, name: person?.nama ?? '' })) }} />
+        {form.role === 'system_admin' && !form.personel_id && <label className="wide"><span>Nama programmer</span><input value={form.name} onChange={(event) => setField('name', event.target.value)} required/>{fieldError('name') && <small>{fieldError('name')}</small>}</label>}
+        <p className="wide dashboard-note">Akun milik individu, bukan akun bersama. Cakupan Operator ditentukan terpisah dari penempatan personel.</p>
         <label className="wide"><span>Email login</span><input type="email" value={form.email} onChange={(event) => setField('email', event.target.value)} required/>{fieldError('email') && <small>{fieldError('email')}</small>}</label>
         <label><span>{isEdit ? 'Password baru (opsional)' : 'Password'}</span><input type="password" value={form.password} onChange={(event) => setField('password', event.target.value)} required={!isEdit} autoComplete="new-password"/>{fieldError('password') && <small>{fieldError('password')}</small>}</label>
         <label><span>Konfirmasi password</span><input type="password" value={form.password_confirmation} onChange={(event) => setField('password_confirmation', event.target.value)} required={!isEdit} autoComplete="new-password"/></label>

@@ -11,6 +11,8 @@ export interface UserScope {
 }
 
 export interface User {
+  personel_id?: number | null
+  personel?: { id: number; nama_lengkap: string; nomor_identitas: string; archived_at?: string | null } | null
   id: number
   name: string
   email: string
@@ -53,6 +55,8 @@ export interface Qualification {
 }
 
 export interface Personnel {
+  archived_at?: string | null
+  alasan_arsip?: string | null
   id: number
   jenis_personel: 'polri' | 'pns'
   jenis_personel_label: string

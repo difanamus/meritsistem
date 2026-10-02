@@ -23,7 +23,7 @@ class UserController extends Controller
     {
         $filters = $request->validated();
         $actor = $request->user();
-        $query = User::query()->with('scopes.unitOrganisasi');
+        $query = User::query()->with(['scopes.unitOrganisasi', 'personel:id,nama_lengkap,nomor_identitas,deleted_at']);
 
         if ($actor->role === UserRole::AdminSsdm) {
             $query->where('role', UserRole::Operator);
@@ -56,7 +56,7 @@ class UserController extends Controller
     {
         $user = $service->create($request->validated());
 
-        return UserResource::make($user->load('scopes.unitOrganisasi'))
+        return UserResource::make($user->load(['scopes.unitOrganisasi', 'personel']))
             ->additional(['success' => true, 'message' => 'Pengguna berhasil dibuat.'])
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
@@ -66,7 +66,7 @@ class UserController extends Controller
     {
         Gate::authorize('view', $user);
 
-        return UserResource::make($user->load('scopes.unitOrganisasi'))
+        return UserResource::make($user->load(['scopes.unitOrganisasi', 'personel']))
             ->additional(['success' => true, 'message' => 'Detail pengguna berhasil diambil.'])
             ->response();
     }
@@ -75,7 +75,7 @@ class UserController extends Controller
     {
         $updatedUser = $service->update($user, $request->validated());
 
-        return UserResource::make($updatedUser->load('scopes.unitOrganisasi'))
+        return UserResource::make($updatedUser->load(['scopes.unitOrganisasi', 'personel']))
             ->additional(['success' => true, 'message' => 'Pengguna berhasil diperbarui.'])
             ->response();
     }

@@ -19,8 +19,14 @@ export function PersonnelListPage() {
   const [error, setError] = useState('')
   const [searchDraft, setSearchDraft] = useState(searchParams.get('search') ?? '')
   const [regionDraft, setRegionDraft] = useState(searchParams.get('operasi_wilayah') ?? '')
+  const [revision, setRevision] = useState(0)
+  const [restoring, setRestoring] = useState<number | null>(null)
+  const [restoreConfirm, setRestoreConfirm] = useState<number | null>(null)
+  const [message, setMessage] = useState('')
+  const archived = searchParams.get('arsip') === '1'
 
   const query = useMemo(() => ({
+    arsip: searchParams.get('arsip') || undefined,
     search: searchParams.get('search') || undefined,
     bidang_fungsi_id: searchParams.get('bidang_fungsi_id') || undefined,
     operasi_wilayah: searchParams.get('operasi_wilayah') || undefined,
@@ -66,7 +72,7 @@ export function PersonnelListPage() {
         if (active) setLoadedQuery(queryKey)
       })
     return () => { active = false }
-  }, [queryKey])
+  }, [queryKey, revision])
 
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams)
@@ -86,10 +92,13 @@ export function PersonnelListPage() {
   return (
     <div className="page-wrap">
       {location.state?.message && <div className="alert success" role="status">{location.state.message}</div>}
+      {message && <div className="alert success" role="status">{message}</div>}
       <header className="page-header reveal">
         <div><span className="eyebrow">Basis data merit</span><h1>Data Personel</h1><p>Telusuri identitas, kualifikasi, dan rekam jabatan dalam satu pandangan.</p></div>
         {user?.permissions?.create_personnel && <Link className="primary-cta compact" to="/personel/tambah"><span>Tambah personel</span><span className="cta-icon">+</span></Link>}
       </header>
+      {user?.role !== 'operator' && <div className="archive-tabs"><button className={!archived ? 'active' : ''} onClick={() => setFilter('arsip', '')}>Data personel</button><button className={archived ? 'active' : ''} onClick={() => setFilter('arsip', '1')}>Arsip personel</button></div>}
+      {archived && <p className="dashboard-note">Arsip bukan status dinas. Pemulihan mempertahankan riwayat asli; akun terkait harus diaktifkan kembali secara terpisah.</p>}
 
       <section className="metric-row reveal delay-one" aria-label="Ringkasan data">
         <div className="metric-shell"><div className="metric-core"><span>Hasil ditemukan</span><strong>{meta?.total ?? '—'}</strong><small>sesuai cakupan akses</small></div></div>
@@ -128,6 +137,7 @@ export function PersonnelListPage() {
           </div>
 
           {error && <div className="alert error">{error}</div>}
+          {searchParams.get('sort') === 'pangkat' && <p className="dashboard-note">Dikelompokkan menurut jenis personel, lalu urutan pangkat. Urutan POLRI dan PNS tidak dibandingkan sebagai nilai merit.</p>}
           <div className={`data-table-wrap ${loading ? 'is-loading' : ''}`}>
             <table className="data-table">
               <thead><tr><th>Personel</th><th>Jabatan saat ini</th><th>Satker</th><th>Kualifikasi relevan</th><th>Pengalaman</th><th>Operasi</th><th aria-label="Aksi"/></tr></thead>
@@ -140,7 +150,12 @@ export function PersonnelListPage() {
                     <td><strong className="numeric-cell">{person.ringkasan_relevan?.jumlah_kualifikasi ?? person.jumlah_kualifikasi ?? 0}</strong><small>kegiatan</small></td>
                     <td><strong className="numeric-cell">{years(person.ringkasan_relevan?.durasi_pengalaman_hari)}</strong><small>tahun</small></td>
                     <td><strong className="numeric-cell">{person.ringkasan_operasi?.jumlah ?? 0}</strong><small>{person.ringkasan_operasi?.total_durasi_hari ?? 0} hari kumulatif</small></td>
-                    <td><Link className="row-action" to={`/personel/${person.id}`} aria-label={`Lihat ${person.nama_lengkap}`}><Icon name="chevron" size={17}/></Link></td>
+                    <td>{!archived ? <Link className="row-action" to={`/personel/${person.id}`} aria-label={`Lihat ${person.nama_lengkap}`}><Icon name="chevron" size={17}/></Link> : <div><small>Alasan: {person.alasan_arsip ?? 'Arsip lama'}</small>{restoreConfirm !== person.id ? <button className="text-action" onClick={() => setRestoreConfirm(person.id)}>Pulihkan</button> : <div className="table-actions"><button className="text-action" disabled={restoring !== null} onClick={async () => {
+                      setRestoring(person.id); setError(''); setMessage('')
+                      try { await apiRequest(`/personel/${person.id}/restore`, { method: 'POST' }); setRestoreConfirm(null); setResult(null); setMessage('Personel dipulihkan. Akun terkait tidak otomatis aktif.'); setRevision((value) => value + 1) }
+                      catch (exception) { setError(exception instanceof ApiError ? exception.message : 'Pemulihan gagal.') }
+                      finally { setRestoring(null) }
+                    }}>{restoring === person.id ? 'Memulihkan…' : 'Ya, pulihkan'}</button><button className="muted-action" disabled={restoring !== null} onClick={() => setRestoreConfirm(null)}>Batal</button></div>}</div>}</td>
                   </tr>
                 ))}
                 {loading && Array.from({ length: 5 }).map((_, index) => <tr className="skeleton-row" key={index}><td colSpan={7}><span/></td></tr>)}

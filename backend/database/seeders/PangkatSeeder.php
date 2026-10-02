@@ -14,6 +14,12 @@ class PangkatSeeder extends Seeder
     public function run(): void
     {
         $pangkatPolri = [
+            ['BHARADA', 'Bhayangkara Dua'],
+            ['BHARATU', 'Bhayangkara Satu'],
+            ['BHARAKA', 'Bhayangkara Kepala'],
+            ['ABRIPDA', 'Ajun Brigadir Polisi Dua'],
+            ['ABRIPTU', 'Ajun Brigadir Polisi Satu'],
+            ['ABRIP', 'Ajun Brigadir Polisi'],
             ['BRIPDA', 'Brigadir Polisi Dua'],
             ['BRIPTU', 'Brigadir Polisi Satu'],
             ['BRIGPOL', 'Brigadir Polisi'],
@@ -33,35 +39,41 @@ class PangkatSeeder extends Seeder
         ];
 
         foreach ($pangkatPolri as $index => [$kode, $nama]) {
-            Pangkat::query()->updateOrCreate(
-                ['kode' => $kode],
-                [
-                    'nama' => $nama,
-                    'jenis_personel' => JenisPersonel::Polri,
-                    'urutan' => $index + 1,
-                    'is_active' => true,
-                ],
-            );
+            $this->saveRank($kode, $nama, JenisPersonel::Polri, $index + 1);
         }
 
         $pangkatPns = [
+            ['PNS-IA', 'Juru Muda'],
+            ['PNS-IB', 'Juru Muda Tingkat I'],
+            ['PNS-IC', 'Juru'],
+            ['PNS-ID', 'Juru Tingkat I'],
+            ['PNS-IIA', 'Pengatur Muda'],
+            ['PNS-IIB', 'Pengatur Muda Tingkat I'],
+            ['PNS-IIC', 'Pengatur'],
+            ['PNS-IID', 'Pengatur Tingkat I'],
             ['PNS-IIIA', 'Penata Muda'],
             ['PNS-IIIB', 'Penata Muda Tingkat I'],
             ['PNS-IIIC', 'Penata'],
             ['PNS-IIID', 'Penata Tingkat I'],
             ['PNS-IVA', 'Pembina'],
+            ['PNS-IVB', 'Pembina Tingkat I'],
+            ['PNS-IVC', 'Pembina Utama Muda'],
+            ['PNS-IVD', 'Pembina Utama Madya'],
+            ['PNS-IVE', 'Pembina Utama'],
         ];
 
         foreach ($pangkatPns as $index => [$kode, $nama]) {
-            Pangkat::query()->updateOrCreate(
-                ['kode' => $kode],
-                [
-                    'nama' => $nama,
-                    'jenis_personel' => JenisPersonel::Pns,
-                    'urutan' => $index + 1,
-                    'is_active' => true,
-                ],
-            );
+            $this->saveRank($kode, $nama, JenisPersonel::Pns, $index + 1);
         }
+    }
+
+    private function saveRank(string $kode, string $nama, JenisPersonel $jenisPersonel, int $urutan): void
+    {
+        $rank = Pangkat::withTrashed()->firstOrNew(['kode' => $kode]);
+        $rank->fill(['nama' => $nama, 'jenis_personel' => $jenisPersonel, 'urutan' => $urutan]);
+        if (! $rank->exists) {
+            $rank->is_active = true;
+        }
+        $rank->save();
     }
 }

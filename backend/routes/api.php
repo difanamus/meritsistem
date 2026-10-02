@@ -21,6 +21,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/dashboard', DashboardController::class);
         Route::get('/system-status', SystemStatusController::class);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::get('/personel-options', [PersonelController::class, 'options']);
+        Route::post('/personel/{id}/restore', [PersonelController::class, 'restore'])->whereNumber('id');
         Route::apiResource('personel', PersonelController::class);
         Route::apiResource('users', UserController::class);
         Route::get('/reference-options', ReferenceOptionController::class);

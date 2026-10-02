@@ -45,7 +45,7 @@ class KualifikasiPersonelPolicy
      */
     public function delete(User $user, KualifikasiPersonel $kualifikasiPersonel): bool
     {
-        return $user->can('delete', $kualifikasiPersonel->personel);
+        return $kualifikasiPersonel->personel !== null && $user->can('update', $kualifikasiPersonel->personel);
     }
 
     /**

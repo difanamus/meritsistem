@@ -16,6 +16,8 @@ class PersonelResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'archived_at' => $this->deleted_at?->toISOString(),
+            'alasan_arsip' => $this->when($this->trashed(), $this->alasan_arsip),
             'jenis_personel' => $this->jenis_personel->value,
             'jenis_personel_label' => $this->jenis_personel->label(),
             'nomor_identitas' => $this->nomor_identitas,

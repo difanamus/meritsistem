@@ -273,7 +273,7 @@ paths:
     post:
       tags: [Administrasi Referensi]
       summary: Tambah referensi oleh System Admin atau Admin SSDM
-      description: Kolom khusus harus sesuai type URL. Unit non-root wajib memiliki induk; root tidak boleh memiliki induk. Unit aktif wajib berada di bawah induk aktif.
+      description: Pangkat hanya dapat dikelola System Admin; Admin SSDM hanya membaca/memilih pangkat (mutasi data referensi pangkat ditolak 403). Kategori lain dikelola System Admin/Admin SSDM. Kolom khusus harus sesuai type URL. Unit non-root wajib memiliki induk; root tidak boleh memiliki induk. Unit aktif wajib berada di bawah induk aktif.
       requestBody:
         required: true
         content:
@@ -304,7 +304,7 @@ paths:
     put:
       tags: [Administrasi Referensi]
       summary: Perbarui atau aktifkan/nonaktifkan referensi
-      description: Kirim seluruh kolom wajib sesuai type. Siklus induk unit ditolak. Nonaktifkan bawahan aktif sebelum induk. Jenis personel pada pangkat yang sudah dipakai tidak dapat diganti.
+      description: Pangkat hanya dapat dipelihara System Admin (Admin SSDM ditolak 403). Kirim seluruh kolom wajib sesuai type. Siklus induk unit ditolak. Nonaktifkan bawahan aktif sebelum induk. Jenis personel pada pangkat yang sudah dipakai tidak dapat diganti.
       requestBody:
         required: true
         content:
@@ -321,7 +321,7 @@ paths:
     delete:
       tags: [Administrasi Referensi]
       summary: Soft delete referensi yang belum digunakan
-      description: Referensi yang masih dipakai personel, riwayat termasuk soft-deleted, scope, atau unit anak ditolak dengan 409. Gunakan status nonaktif untuk menghentikan penggunaan baru. Kode tetap unik setelah soft delete.
+      description: Penghapusan referensi pangkat hanya oleh System Admin (Admin SSDM ditolak 403). Referensi yang masih dipakai personel, riwayat termasuk soft-deleted, scope, atau unit anak ditolak dengan 409. Gunakan status nonaktif untuk menghentikan penggunaan baru. Kode tetap unik setelah soft delete.
       responses:
         '200': { $ref: '#/components/responses/SuccessMessage' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
@@ -333,6 +333,7 @@ paths:
       tags: [Personel]
       summary: Daftar personel dalam scope pengguna
       parameters:
+        - { name: arsip, in: query, schema: { type: boolean }, description: '1 untuk daftar arsip, hanya System Admin/Admin SSDM.' }
         - { name: search, in: query, schema: { type: string, maxLength: 100 }, description: Nama atau NRP/NIP }
         - { name: unit_organisasi_id, in: query, schema: { type: integer } }
         - { name: pangkat_id, in: query, schema: { type: integer } }
@@ -363,11 +364,14 @@ paths:
         '422': { $ref: '#/components/responses/ValidationError' }
     post:
       tags: [Personel]
-      summary: Tambah personel dan jabatan utama awal secara atomik
+      summary: Registrasi personel beserta pendidikan dan riwayat awal secara atomik
+      description: Pendidikan umum wajib, pendidikan Polri wajib untuk POLRI dan opsional bagi PNS. Riwayat tambahan opsional maksimum 20 per jenis. PDF privat opsional maksimal 5 MB per file, kirim nested form-data menggunakan bracket notation. File baru dibersihkan jika transaksi gagal. Jabatan terdahulu harus sudah selesai dan periode jabatan utama tidak boleh tumpang tindih.
       requestBody:
         required: true
         content:
           application/json:
+            schema: { $ref: '#/components/schemas/PersonelCreate' }
+          multipart/form-data:
             schema: { $ref: '#/components/schemas/PersonelCreate' }
       responses:
         '201':
@@ -426,11 +430,52 @@ paths:
         '422': { $ref: '#/components/responses/ValidationError' }
     delete:
       tags: [Personel]
-      summary: Soft delete personel
+      summary: Arsipkan personel (admin-only, alasan wajib)
+      description: Tidak mengubah tanggal karier. Menonaktifkan akun/scope terkait dan mencabut token; pemeriksaan kewenangan kelola akun tetap berlaku. Bukan mekanisme pensiun atau mutasi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [alasan_arsip]
+              properties:
+                alasan_arsip: { type: string, minLength: 5, maxLength: 1000 }
       responses:
         '200': { $ref: '#/components/responses/SuccessMessage' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /personel/{id}/restore:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    post:
+      tags: [Personel]
+      summary: Pulihkan arsip personel (admin-only)
+      description: Riwayat dan tanggal asli dipertahankan. Akun/scope tidak otomatis diaktifkan kembali.
+      responses:
+        '200': { $ref: '#/components/responses/SuccessMessage' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /personel-options:
+    get:
+      tags: [Pengguna]
+      summary: Cari personel aktif untuk pemilik akun (admin-only)
+      parameters:
+        - { name: search, in: query, required: true, schema: { type: string, minLength: 3, maxLength: 100 } }
+      responses:
+        '200':
+          description: Maksimum 25 hasil, terurut nama/id; personel arsip/nonaktif tidak ditampilkan.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, maxItems: 25, items: { $ref: '#/components/schemas/PersonnelAccountOption' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
   /personel/{personel}/kualifikasi:
     parameters:
       - $ref: '#/components/parameters/PersonelId'
@@ -851,8 +896,10 @@ components:
         berlaku_sampai: { type: [string, 'null'], format: date }
     UserCreate:
       type: object
-      required: [name, email, password, password_confirmation, role, is_active]
+      description: Personel aktif wajib untuk akun staff; programmer eksternal boleh tanpa personel. Nama akun terkait ditentukan server, satu personel satu akun.
+      required: [email, password, password_confirmation, role, is_active, scopes]
       properties:
+        personel_id: { type: [integer, 'null'], description: Wajib kecuali role system_admin. }
         name: { type: string, maxLength: 255 }
         email: { type: string, format: email, maxLength: 255 }
         password: { type: string, format: password, minLength: 10 }
@@ -862,8 +909,10 @@ components:
         scopes: { type: array, items: { $ref: '#/components/schemas/UserScopeInput' } }
     UserUpdate:
       type: object
-      required: [name, email, role, is_active]
+      description: Pemilik akun yang sudah terhubung tidak dapat diganti/dilepas. Personel arsip/nonaktif boleh dipertahankan hanya jika akun tetap nonaktif. Akun staff lama yang belum terhubung wajib dipilihkan personel.
+      required: [email, role, is_active, scopes]
       properties:
+        personel_id: { type: [integer, 'null'] }
         name: { type: string, maxLength: 255 }
         email: { type: string, format: email, maxLength: 255 }
         password: { type: [string, 'null'], format: password, minLength: 10 }
@@ -883,6 +932,8 @@ components:
       type: object
       properties:
         id: { type: integer }
+        personel_id: { type: [integer, 'null'] }
+        personel: { oneOf: [{ $ref: '#/components/schemas/PersonnelAccountOption' }, { type: 'null' }], description: Disertakan pada endpoint administrasi pengguna. }
         name: { type: string }
         email: { type: string, format: email }
         role: { $ref: '#/components/schemas/UserRole' }
@@ -910,8 +961,15 @@ components:
         meta: { type: object }
     PersonelCreate:
       type: object
-      required: [jenis_personel, nomor_identitas, nama_lengkap, pangkat_id, tempat_lahir, tanggal_lahir, unit_organisasi_id, status]
+      required: [jenis_personel, nomor_identitas, nama_lengkap, pangkat_id, tempat_lahir, tanggal_lahir, unit_organisasi_id, status, pendidikan_umum]
       properties:
+        pendidikan_umum: { $ref: '#/components/schemas/RegistrationEducation' }
+        pendidikan_polri: { $ref: '#/components/schemas/RegistrationEducation', description: Wajib jika jenis_personel polri. }
+        kualifikasi: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/KualifikasiInput' } }
+        riwayat_jabatan: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/RiwayatJabatanInput' }, description: Tanggal selesai wajib pada registrasi. }
+        penugasan_operasi: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/MeritInput' }, description: Aturan khusus penugasan-operasi berlaku. }
+        prestasi: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/MeritInput' }, description: Aturan khusus prestasi berlaku. }
+        penghargaan: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/MeritInput' }, description: Aturan khusus penghargaan berlaku. }
         jenis_personel: { $ref: '#/components/schemas/JenisPersonel' }
         nomor_identitas: { type: string, pattern: '^\\d{6,30}$' }
         nama_lengkap: { type: string, maxLength: 255 }
@@ -931,6 +989,30 @@ components:
             tanggal_mulai: { type: string, format: date }
             nivelering: { type: [string, 'null'] }
             keterangan: { type: [string, 'null'] }
+            dokumen_sk: { type: string, format: binary, description: PDF opsional maksimal 5 MB. }
+    PersonnelAccountOption:
+      type: object
+      properties:
+        id: { type: integer }
+        nama_lengkap: { type: string }
+        nomor_identitas: { type: string }
+        archived_at: { type: [string, 'null'], format: date-time }
+    RegistrationEducation:
+      type: object
+      required: [nama_kualifikasi, tahun]
+      description: Jenis pendidikan ditentukan server dari kode referensi; field tanggal menggunakan validasi urutan yang sama seperti kualifikasi.
+      properties:
+        nama_kualifikasi: { type: string, maxLength: 255 }
+        jenjang: { type: [string, 'null'], maxLength: 100 }
+        bidang_studi: { type: [string, 'null'], maxLength: 255 }
+        institusi_penyelenggara: { type: [string, 'null'], maxLength: 255 }
+        tahun: { type: integer, minimum: 1900 }
+        tanggal_mulai: { type: [string, 'null'], format: date }
+        tanggal_selesai: { type: [string, 'null'], format: date }
+        nomor_dokumen: { type: [string, 'null'], maxLength: 100 }
+        bidang_fungsi_id: { type: [integer, 'null'] }
+        keterangan: { type: [string, 'null'], maxLength: 1000 }
+        dokumen_pendukung: { type: string, format: binary, description: PDF opsional maksimal 5 MB. }
     PersonelUpdate:
       type: object
       properties:
@@ -947,6 +1029,8 @@ components:
         - type: object
           properties:
             id: { type: integer }
+            archived_at: { type: [string, 'null'], format: date-time }
+            alasan_arsip: { type: [string, 'null'], description: Hanya pada daftar arsip. }
             unit_organisasi: { $ref: '#/components/schemas/ReferenceItem' }
             pangkat: { $ref: '#/components/schemas/ReferenceItem' }
             jabatan_utama_aktif: { oneOf: [{ $ref: '#/components/schemas/RiwayatJabatan' }, { type: 'null' }] }

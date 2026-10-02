@@ -12,12 +12,15 @@ use App\Models\KualifikasiPersonel;
 use App\Models\Pangkat;
 use App\Models\Personel;
 use App\Models\RiwayatJabatan;
+use App\Models\User;
 use App\Services\MeritProfileService;
 use App\Services\OrganizationalScopeService;
+use App\Services\PersonnelRegistrationService;
+use App\Services\UserAdministrationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,6 +33,8 @@ class PersonelController extends Controller
         MeritProfileService $meritProfile,
     ): AnonymousResourceCollection {
         $filters = $request->validated();
+        $archived = $request->boolean('arsip');
+        abort_if($archived && ! $scopeService->isGlobal($request->user()), 403);
         $functionId = $filters['bidang_fungsi_id'] ?? null;
         $query = $scopeService->scopePersonelQuery(
             Personel::query()
@@ -41,6 +46,9 @@ class PersonelController extends Controller
                 ]),
             $request->user(),
         );
+        if ($archived) {
+            $query->onlyTrashed();
+        }
 
         $durationExpression = DB::getDriverName() === 'pgsql'
             ? 'COALESCE(SUM((COALESCE(tanggal_selesai, CURRENT_DATE) - tanggal_mulai) + 1), 0)'
@@ -85,7 +93,7 @@ class PersonelController extends Controller
 
         match ($filters['sort'] ?? 'nama') {
             'terbaru' => $query->orderBy('created_at', $direction),
-            'pangkat' => $query->orderBy(
+            'pangkat' => $query->orderBy('jenis_personel')->orderBy(
                 Pangkat::query()->select('urutan')->whereColumn('pangkat.id', 'personel.pangkat_id'),
                 $direction,
             ),
@@ -105,30 +113,9 @@ class PersonelController extends Controller
         ]);
     }
 
-    public function store(StorePersonelRequest $request): JsonResponse
+    public function store(StorePersonelRequest $request, PersonnelRegistrationService $registration): JsonResponse
     {
-        $validated = $request->validated();
-        $positionData = Arr::pull($validated, 'jabatan_utama');
-
-        $personel = DB::transaction(function () use ($request, $validated, $positionData): Personel {
-            $personel = Personel::query()->create([
-                ...$validated,
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
-            ]);
-
-            if ($positionData !== null) {
-                $personel->riwayatJabatan()->create([
-                    ...$positionData,
-                    'unit_organisasi_id' => $personel->unit_organisasi_id,
-                    'is_jabatan_utama' => true,
-                    'created_by' => $request->user()->id,
-                    'updated_by' => $request->user()->id,
-                ]);
-            }
-
-            return $personel;
-        });
+        $personel = $registration->create($request->validated(), $request->user());
 
         return PersonelResource::make($this->loadProfile($personel))
             ->additional([
@@ -160,6 +147,7 @@ class PersonelController extends Controller
                 ...$request->validated(),
                 'updated_by' => $request->user()->id,
             ]);
+            User::query()->where('personel_id', $personel->id)->update(['name' => $personel->nama_lengkap]);
 
             if ($wasActive && $personel->status !== StatusPersonel::Aktif) {
                 $personel->jabatanUtamaAktif()->update([
@@ -177,23 +165,50 @@ class PersonelController extends Controller
             ->response();
     }
 
-    public function destroy(Personel $personel): JsonResponse
+    public function destroy(Request $request, Personel $personel, UserAdministrationService $users): JsonResponse
     {
         Gate::authorize('delete', $personel);
 
-        DB::transaction(function () use ($personel): void {
-            $personel->jabatanUtamaAktif()->update([
-                'tanggal_selesai' => today(),
-                'updated_by' => request()->user()->id,
-            ]);
-            $personel->update(['updated_by' => request()->user()->id]);
-            $personel->delete();
+        $data = $request->validate(['alasan_arsip' => ['required', 'string', 'min:5', 'max:1000']]);
+        DB::transaction(function () use ($personel, $request, $data, $users): void {
+            $locked = Personel::query()->lockForUpdate()->findOrFail($personel->id);
+            $locked->update([...$data, 'archived_by' => $request->user()->id, 'updated_by' => $request->user()->id]);
+            foreach (User::query()->where('personel_id', $locked->id)->lockForUpdate()->get() as $account) {
+                Gate::authorize('update', $account);
+                $users->deactivate($account);
+            }
+            $locked->delete();
         });
 
         return response()->json([
             'success' => true,
-            'message' => 'Data personel berhasil dihapus.',
+            'message' => 'Personel diarsipkan tanpa mengubah riwayat karier. Akun terkait dinonaktifkan.',
         ]);
+    }
+
+    public function restore(Request $request, int $id): JsonResponse
+    {
+        $person = Personel::onlyTrashed()->findOrFail($id);
+        Gate::authorize('restore', $person);
+        DB::transaction(function () use ($person, $request): void {
+            $locked = Personel::onlyTrashed()->lockForUpdate()->findOrFail($person->id);
+            $locked->restore();
+            $locked->update(['updated_by' => $request->user()->id]);
+        });
+
+        return response()->json(['success' => true, 'message' => 'Personel dipulihkan. Akun tidak otomatis diaktifkan kembali.']);
+    }
+
+    public function options(Request $request): JsonResponse
+    {
+        Gate::authorize('create', User::class);
+        $data = $request->validate(['search' => ['required', 'string', 'min:3', 'max:100']]);
+        $term = '%'.mb_strtolower($data['search']).'%';
+        $people = Personel::query()->where('status', 'aktif')
+            ->where(fn (Builder $query) => $query->whereRaw('LOWER(nama_lengkap) LIKE ?', [$term])->orWhere('nomor_identitas', 'like', $term))
+            ->orderBy('nama_lengkap')->orderBy('id')->limit(25)->get(['id', 'nama_lengkap', 'nomor_identitas']);
+
+        return response()->json(['data' => $people]);
     }
 
     private function loadProfile(Personel $personel): Personel

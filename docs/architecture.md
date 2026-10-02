@@ -7,6 +7,7 @@ Dokumen ini merangkum struktur data serta alur keamanan dan mutasi pada Merit Sy
 ```mermaid
 erDiagram
     USERS ||--o{ USER_SCOPES : memiliki
+    PERSONEL o|--o| USERS : pemilik_akun_individu
     USERS ||--o{ PERSONAL_ACCESS_TOKENS : login_dengan
     UNIT_ORGANISASI ||--o{ UNIT_ORGANISASI : parent_dari
     UNIT_ORGANISASI ||--o{ USER_SCOPES : menjadi_scope
@@ -27,6 +28,7 @@ erDiagram
 
     USERS {
         bigint id PK
+        bigint personel_id FK,UK
         string name
         string email UK
         string password
@@ -69,6 +71,8 @@ erDiagram
         bigint unit_organisasi_id FK
         string status
         timestamp deleted_at
+        string alasan_arsip
+        bigint archived_by FK
     }
     KUALIFIKASI_PERSONEL {
         bigint id PK
@@ -252,3 +256,18 @@ flowchart LR
 ```
 
 Jumlah kegiatan dan durasi pengalaman adalah ringkasan faktual, bukan skor otomatis. Keputusan merit tetap dilakukan pimpinan dengan membaca riwayat personel.
+
+## Registrasi dan arsip
+
+- Registrasi menerima pendidikan umum wajib, pendidikan Polri wajib untuk POLRI (opsional bagi PNS), serta riwayat awal opsional. Pendidikan tetap berupa record `kualifikasi_personel`, bukan kolom tunggal. Jenis pendidikan ditentukan server dari kode referensi.
+- Identitas, jabatan awal, pendidikan, dan seluruh riwayat yang diisi disimpan dalam satu transaksi. Validasi menggunakan aturan domain yang sama dengan form profil. PDF tersimpan privat; kegagalan transaksi membersihkan file yang baru dibuat. Maksimal 20 record per jenis riwayat pada satu registrasi, PDF maksimal 5 MB per file.
+- Riwayat jabatan saat registrasi harus sudah selesai; periode jabatan utama tidak boleh bertumpang tindih. Penempatan aktif diisi melalui jabatan utama awal.
+- `users.personel_id` nullable dan unik. Akun Admin SSDM/Operator baru wajib terhubung ke personel aktif, nama akun berasal dari personel; programmer eksternal boleh tanpa personel. Pemilik akun yang telah terhubung tidak dapat dialihkan ke individu lain. Scope tetap merupakan assignment terpisah; mutasi tidak otomatis memindahkan kewenangan akun.
+- Data lama termasuk akun demo dipertahankan tanpa menebak identitas pemilik atau pendidikan. Akun staff lama yang belum terhubung wajib dipilihkan personel pada pembaruan berikutnya.
+- Pengarsipan hanya untuk System Admin/Admin SSDM, alasan wajib. Soft delete menyembunyikan profil tanpa mengubah tanggal jabatan; akun terkait dinonaktifkan, scope dimatikan, token dicabut. Kewenangan akun tidak dapat dilewati melalui pengarsipan personel (termasuk akun sendiri).
+- Daftar arsip admin memakai pagination; pemulihan mengembalikan profil dan riwayat asli, tidak mengaktifkan kembali akun/scope. Pemulihan semua jenis riwayat individual serta audit trail penuh belum termasuk versi ini.
+- Nomor identitas tetap unik termasuk arsip. Untuk koreksi duplikat, periksa profil yang benar sebelum mengarsipkan; tidak ada penggabungan otomatis.
+
+## Rancangan rekam disiplin (belum diimplementasikan)
+
+Rekam pelanggaran hanya boleh berisi putusan/sanksi final, bukan dugaan atau laporan mentah. Rencana data: jenis disiplin/etik, nomor dan tanggal putusan, instansi penetap, uraian faktual terbatas, sanksi, masa berlaku, dokumen privat, status berlaku/dibatalkan, serta versi perubahan keputusan. Pembatalan tidak menghapus rekam sebelumnya. Akses baca/tulis/unduh dibatasi petugas berwenang dan dicatat pada audit akses; tidak diberikan otomatis kepada semua Operator. Tidak ada pengurangan skor otomatis. Modul ini ditunda sampai governance dan audit khusus siap; belum ada endpoint/form disiplin pada prototype.

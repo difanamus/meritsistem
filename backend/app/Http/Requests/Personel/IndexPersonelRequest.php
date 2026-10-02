@@ -27,6 +27,7 @@ class IndexPersonelRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'arsip' => ['sometimes', 'boolean'],
             'search' => ['sometimes', 'string', 'max:100'],
             'unit_organisasi_id' => ['sometimes', 'integer', 'exists:unit_organisasi,id'],
             'pangkat_id' => ['sometimes', 'integer', 'exists:pangkat,id'],

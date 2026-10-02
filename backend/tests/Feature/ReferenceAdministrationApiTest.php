@@ -36,7 +36,7 @@ class ReferenceAdministrationApiTest extends TestCase
     #[DataProvider('referenceTypes')]
     public function test_global_admin_can_create_read_update_and_delete_unused_reference(string $type, string $table, array $extra): void
     {
-        Sanctum::actingAs(User::factory()->create(['role' => UserRole::AdminSsdm]));
+        Sanctum::actingAs(User::factory()->create(['role' => $type === 'pangkat' ? UserRole::SystemAdmin : UserRole::AdminSsdm]));
         $payload = ['kode' => 'DEMO', 'nama' => 'Referensi Demo', 'is_active' => true, ...$extra];
 
         $created = $this->postJson("/api/v1/references/{$type}", $payload)
@@ -124,7 +124,7 @@ class ReferenceAdministrationApiTest extends TestCase
 
     public function test_used_references_cannot_be_deleted_even_when_dependent_record_is_soft_deleted(): void
     {
-        Sanctum::actingAs(User::factory()->create(['role' => UserRole::AdminSsdm]));
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::SystemAdmin]));
         $person = Personel::factory()->create();
         $qualification = KualifikasiPersonel::factory()->for($person)->create();
         $position = RiwayatJabatan::factory()->for($person)->create();

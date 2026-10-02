@@ -11,7 +11,7 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 - CRUD pengguna berbasis permission, assignment beberapa scope unit, aktivasi/nonaktif akun, dan pencabutan seluruh token saat akun dinonaktifkan.
 - Scope organisasi `OWN_UNIT` dan `UNIT_AND_DESCENDANTS` pada hierarki Mabes–Polda–Polres–Satker–Polsek.
 - CRUD personel, kualifikasi, serta riwayat jabatan dengan validasi dan soft delete.
-- CRUD unit organisasi, pangkat, bidang/fungsi, jenis kualifikasi, dan jenis penugasan; Operator memiliki akses baca, dengan daftar unit dibatasi scope.
+- CRUD unit organisasi, bidang/fungsi, jenis kualifikasi, dan jenis penugasan oleh System Admin/Admin SSDM; daftar pangkat baku (22 POLRI termasuk enam Tamtama, 17 PNS) hanya dipelihara System Admin. Admin SSDM dan Operator dapat membaca/memilih pangkat, dengan daftar unit dibatasi scope Operator.
 - Satu jabatan utama aktif, dengan penugasan tambahan PS, PLT, atau PLH.
 - Pergantian jabatan dan mutasi atomik: menutup jabatan lama, memperbarui Satker bila perlu, lalu membuat jabatan baru dalam satu transaksi database.
 - Upload PDF pendukung/SK opsional maksimal 5 MB pada storage privat dan download berizin.
@@ -82,6 +82,18 @@ php artisan serve --host=127.0.0.1 --port=8000
 ```
 
 API tersedia pada `http://127.0.0.1:8000/api/v1`.
+
+### Data demo tambahan (opsional)
+
+Setelah migrasi dan seed dasar, dari folder `backend` jalankan:
+
+```powershell
+php artisan db:seed --class=DemoPersonnelSeeder
+```
+
+Seeder terpisah ini menambahkan 100 identitas sintetis: 80 POLRI (Tamtama sampai Perwira) dan 20 PNS, dengan 85 aktif, 5 nonaktif, 10 pensiun (5 di antaranya diarsipkan). Pendidikan wajib, variasi kualifikasi/riwayat jabatan, operasi Papua/Aceh/Jakarta/Bengkulu, prestasi, dan penghargaan tersedia untuk demonstrasi filter, pagination, serta scope. Dua cabang Polda/Polres/Polsek fiktif bertanda DEMO juga ditambahkan, selain penempatan di Satker contoh yang sudah ada. Semua nama bertanda `(DEMO nnn)`; nomor POLRI `99990001`–`99990080` dan nomor PNS `999900000000000081`–`999900000000000100` sengaja sintetis, bukan identitas kedinasan nyata. Nama jabatan, lembaga, dan keputusan juga hanya contoh.
+
+Hanya diizinkan pada `APP_ENV=local` atau `testing`; tidak otomatis dijalankan oleh seed standar. Tidak membuat akun, memperluas scope, mengubah password, atau membuat foto/PDF palsu. Semua catatan merit belum diverifikasi. Jalankan ulang dengan perintah yang sama tanpa `migrate:fresh`: identitas yang sudah ada (termasuk arsip) dilewati beserta seluruh riwayatnya, sehingga perubahan testing tidak tertimpa atau dipulihkan paksa. Referensi dasar harus tersedia/aktif; konflik unit membatalkan transaksi tanpa menimpa data. Ini dataset demo, bukan pengujian beban nasional.
 
 Untuk upload PDF, pastikan `fileinfo` aktif, `upload_max_filesize` minimal `5M`, `post_max_size` minimal `8M`, dan folder sementara PHP writable. Jalankan `php --ini` untuk melihat konfigurasi yang dipakai. Jika Windows menampilkan `unable to create a temporary file`, buat folder `backend/storage/app/upload-tmp`, atur `upload_tmp_dir` pada `php.ini` ke path absolut folder itu, lalu restart `php artisan serve`. Folder sementara dan dokumen privat tidak perlu masuk Git. `storage:link` bukan jalur unduh PDF; semua PDF diunduh melalui API berizin.
 
@@ -166,8 +178,11 @@ Gunakan endpoint `POST /api/v1/auth/login`, simpan nilai `token`, lalu kirim hea
 - Dashboard tiap role tersedia di `/dashboard`; System Admin memiliki `/sistem` untuk pemeriksaan koneksi dan versi runtime secara read-only. Admin SSDM tidak memiliki akses teknis, sementara ringkasan Operator mengikuti scope aktif.
 - Profil memiliki CRUD kualifikasi dan riwayat jabatan berhalaman, penugasan tambahan aktif, serta upload/ganti/lepas dan unduh PDF privat. Edit mengirim hanya field yang berubah; field opsional dapat dikosongkan. File edit dikirim melalui POST dengan `_method=PUT` untuk kompatibilitas PHP 8.3.
 - Profil juga memuat CRUD penugasan operasi, prestasi, dan penghargaan dengan PDF privat opsional, soft delete, serta status verifikasi. Data contoh dalam tiga modul ini seluruhnya fiktif.
-- Hapus personel/riwayat melalui UI menggunakan konfirmasi soft delete. Penghapusan langsung jabatan utama aktif tidak tersedia; gunakan ganti jabatan/mutasi. Pemulihan arsip belum tersedia pada UI.
+- Registrasi menyediakan pendidikan umum wajib dan pendidikan Polri wajib untuk POLRI (opsional untuk PNS). Kualifikasi tambahan, jabatan terdahulu, operasi, prestasi, dan penghargaan dapat diisi langsung atau ditambahkan nanti dari profil. Penyimpanan atomik termasuk pembersihan PDF jika transaksi gagal; foto masih placeholder nonaktif.
+- Akun staff baru dipilih dari personel aktif yang sudah ada; satu personel satu akun. Nama diambil dari database, scope terpisah dari penempatan. Programmer eksternal boleh tidak terhubung ke personel. Akun demo/lama tetap dipertahankan tanpa menebak pemilik; saat mengedit akun staff lama, pilih personel pemilik terlebih dahulu.
+- Admin dapat mengarsipkan personel dengan alasan dan memulihkannya dari tab Arsip. Arsip tidak menutup jabatan/mengubah tanggal karier; akun terkait dinonaktifkan dan token dicabut. Pemulihan tidak otomatis mengaktifkan akun. Status pensiun/nonaktif tetap melalui perubahan status, mutasi melalui proses mutasi.
+- Penghapusan langsung jabatan utama aktif tidak tersedia; gunakan ganti jabatan/mutasi. Riwayat individual menggunakan soft delete; restore riwayat individual belum tersedia.
 - Data penilaian kinerja, assessment resmi, dan disiplin final masih direncanakan sebagai pengembangan lanjutan dengan kontrol akses tambahan.
-- Audit trail penuh dan mekanisme restore soft-delete direncanakan untuk pengembangan berikutnya.
+- Audit trail penuh, audit akses disiplin, dan pemulihan riwayat individual direncanakan untuk pengembangan berikutnya. Urutan pangkat hanya pengurutan per jenis personel, bukan skor merit.
 
 Keputusan teknis lengkap dan checklist implementasi tersedia di `implementation_plan.md` dan `task.md`.
