@@ -1,5 +1,9 @@
 const API_URL = import.meta.env?.VITE_API_URL ?? 'http://localhost:8000/api/v1'
 const TOKEN_KEY = 'merit_system_token'
+const CACHE_TTL_MS = 60_000
+const MAX_CACHE_ENTRIES = 50
+const responseCache = new Map<string, { token: string | null; expiresAt: number; value: unknown }>()
+let cacheEpoch = 0
 
 export class ApiError extends Error {
   status: number
@@ -17,6 +21,8 @@ export function getToken() {
 }
 
 export function setToken(token: string | null) {
+  cacheEpoch += 1
+  responseCache.clear()
   if (token) {
     localStorage.setItem(TOKEN_KEY, token)
   } else {
@@ -24,8 +30,20 @@ export function setToken(token: string | null) {
   }
 }
 
+export function peekApiCache<T>(path: string): T | null {
+  const cached = responseCache.get(path)
+  if (!cached) return null
+  if (cached.token !== getToken() || cached.expiresAt < Date.now()) {
+    responseCache.delete(path)
+    return null
+  }
+  return cached.value as T
+}
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
+  const requestEpoch = cacheEpoch
+  const method = (options.method ?? 'GET').toUpperCase()
   const isFormData = options.body instanceof FormData
   const headers = new Headers(options.headers)
 
@@ -34,6 +52,8 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   if (token) headers.set('Authorization', `Bearer ${token}`)
 
   const response = await fetch(`${API_URL}${path}`, { ...options, headers })
+  if (response.status === 401 || response.status === 403) { cacheEpoch += 1; responseCache.clear() }
+  if (response.ok && method !== 'GET') { cacheEpoch += 1; responseCache.clear() }
   const payload = await response.json().catch(() => {
     throw new ApiError('Respons layanan tidak valid. Periksa konfigurasi backend.', response.status)
   })
@@ -44,6 +64,12 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
       response.status,
       payload.errors ?? {},
     )
+  }
+
+  if (method === 'GET' && token && requestEpoch === cacheEpoch && token === getToken()) {
+    responseCache.delete(path)
+    responseCache.set(path, { token, expiresAt: Date.now() + CACHE_TTL_MS, value: payload })
+    if (responseCache.size > MAX_CACHE_ENTRIES) responseCache.delete(responseCache.keys().next().value!)
   }
 
   return payload as T

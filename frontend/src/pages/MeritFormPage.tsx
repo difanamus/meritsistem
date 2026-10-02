@@ -14,7 +14,7 @@ export function MeritFormPage() {
   const navigate = useNavigate()
   const validKind = kind && Object.hasOwn(meritConfig, kind) ? kind as MeritKind : null
   const [person, setPerson] = useState<Personnel | null>(null)
-  const [references, setReferences] = useState<ReferenceOptions | null>(null)
+  const [references, setReferences] = useState<Pick<ReferenceOptions, 'bidang_fungsi'> | null>(null)
   const [record, setRecord] = useState<MeritRecord | null>(null)
   const [values, setValues] = useState<Record<string, string>>({})
   const [initial, setInitial] = useState<Record<string, string> | null>(null)
@@ -31,7 +31,7 @@ export function MeritFormPage() {
     document.title = `${recordId ? 'Edit' : 'Tambah'} ${meritConfig[validKind].title} · Merit SDM POLRI`
     Promise.all([
       apiRequest<{ data: Personnel }>(`/personel/${id}`),
-      apiRequest<{ data: ReferenceOptions }>('/reference-options'),
+      apiRequest<{ data: Pick<ReferenceOptions, 'bidang_fungsi'> }>('/reference-options?only=non_unit'),
       recordId ? apiRequest<{ data: MeritRecord }>(`/merit/${validKind}/${recordId}`) : Promise.resolve(null),
     ]).then(([personResult, optionsResult, recordResult]) => {
       if (!active) return

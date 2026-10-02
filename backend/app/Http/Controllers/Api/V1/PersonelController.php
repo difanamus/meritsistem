@@ -205,13 +205,6 @@ class PersonelController extends Controller
             'jabatanUtamaAktif.bidangFungsi',
             'jabatanUtamaAktif.jenisPenugasan',
             'penugasanTambahanAktif',
-            'kualifikasi' => fn ($query) => $query->latest('tanggal_selesai')->latest('id'),
-            'kualifikasi.jenisKualifikasi',
-            'kualifikasi.bidangFungsi',
-            'riwayatJabatan' => fn ($query) => $query->latest('tanggal_mulai')->latest('id'),
-            'riwayatJabatan.unitOrganisasi',
-            'riwayatJabatan.bidangFungsi',
-            'riwayatJabatan.jenisPenugasan',
         ])->loadCount('kualifikasi');
     }
 }

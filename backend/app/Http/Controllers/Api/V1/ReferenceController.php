@@ -32,10 +32,7 @@ class ReferenceController extends Controller
         $query = $class::query();
         if ($referenceType === ReferenceType::UnitOrganisasi) {
             $query->with('parent');
-            $ids = $scope->accessibleUnitIds($request->user());
-            if ($ids !== null) {
-                $query->whereIn('id', $ids);
-            }
+            $scope->scopeUnitQuery($query, $request->user());
         }
         $query->when($filters['search'] ?? null, function (Builder $query, string $search): void {
             $search = '%'.Str::lower($search).'%';

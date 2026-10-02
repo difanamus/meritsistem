@@ -14,7 +14,7 @@ export function QualificationFormPage() {
   const navigate = useNavigate()
   const editing = !!qualificationId
   const [person, setPerson] = useState<Personnel | null>(null)
-  const [references, setReferences] = useState<ReferenceOptions | null>(null)
+  const [references, setReferences] = useState<Pick<ReferenceOptions, 'jenis_kualifikasi' | 'bidang_fungsi'> | null>(null)
   const [record, setRecord] = useState<QualificationRecord | null>(null)
   const [values, setValues] = useState(emptyValues)
   const [initial, setInitial] = useState<typeof emptyValues | null>(null)
@@ -30,7 +30,7 @@ export function QualificationFormPage() {
     document.title = `${editing ? 'Edit' : 'Tambah'} Kualifikasi · Merit SDM POLRI`
     Promise.all([
       apiRequest<{ data: Personnel }>(`/personel/${id}`),
-      apiRequest<{ data: ReferenceOptions }>('/reference-options'),
+      apiRequest<{ data: Pick<ReferenceOptions, 'jenis_kualifikasi' | 'bidang_fungsi'> }>('/reference-options?only=non_unit'),
       editing ? apiRequest<{ data: QualificationRecord }>(`/kualifikasi/${qualificationId}`) : Promise.resolve(null),
     ]).then(([personResponse, referenceResponse, recordResponse]) => {
       if (!active) return

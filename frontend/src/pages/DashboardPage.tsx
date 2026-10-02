@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { Icon } from '../components/Icon'
-import { apiRequest } from '../lib/api'
+import { ApiError, apiRequest, peekApiCache } from '../lib/api'
 
 interface Dashboard {
   scope: { global: boolean; unit_count: number }
@@ -15,7 +15,7 @@ interface Dashboard {
 
 export function DashboardPage() {
   const { user } = useAuth()
-  const [data, setData] = useState<Dashboard | null>(null)
+  const [data, setData] = useState<Dashboard | null>(() => peekApiCache<{ data: Dashboard }>('/dashboard')?.data ?? null)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
@@ -23,7 +23,7 @@ export function DashboardPage() {
     document.title = 'Dashboard · Merit SDM POLRI'
     apiRequest<{ data: Dashboard }>('/dashboard').then((response) => {
       if (active) { setData(response.data); setError('') }
-    }).catch(() => { if (active) setError('Ringkasan belum dapat dimuat. Periksa koneksi lalu coba kembali.') })
+    }).catch((exception) => { if (active) { if (exception instanceof ApiError && [401, 403].includes(exception.status)) setData(null); setError('Ringkasan belum dapat dimuat. Periksa koneksi lalu coba kembali.') } })
     return () => { active = false }
   }, [attempt])
   const operator = user?.role === 'operator'

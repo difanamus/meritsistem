@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { ApiError, apiRequest, downloadDocument } from './api.ts'
+import { ApiError, apiRequest, downloadDocument, peekApiCache, setToken } from './api.ts'
 
 function session(t) {
   t.mock.method(globalThis, 'fetch')
   const previous = globalThis.localStorage
-  globalThis.localStorage = { getItem: () => 'demo-token' }
+  globalThis.localStorage = { getItem: () => 'demo-token', removeItem: () => {}, setItem: () => {} }
   t.after(() => { globalThis.localStorage = previous })
 }
 
@@ -19,6 +19,44 @@ test('API client preserves structured validation errors', async (t) => {
   session(t)
   fetch.mock.mockImplementation(async () => Response.json({ message: 'Tanggal tidak valid.', errors: { tanggal_selesai: ['Periode terbalik.'] } }, { status: 422 }))
   await assert.rejects(apiRequest('/kualifikasi/1'), (error) => error instanceof ApiError && error.status === 422 && error.errors.tanggal_selesai[0] === 'Periode terbalik.')
+})
+
+test('GET response is available for instant return navigation and is invalidated by writes or token changes', async (t) => {
+  session(t)
+  fetch.mock.mockImplementation(async () => Response.json({ data: { id: 7 } }))
+  assert.equal(peekApiCache('/personel/7'), null)
+  await apiRequest('/personel/7')
+  assert.equal(peekApiCache('/personel/7').data.id, 7)
+  await apiRequest('/personel/7', { method: 'PUT', body: '{}' })
+  assert.equal(peekApiCache('/personel/7'), null)
+  await apiRequest('/personel/7')
+  setToken(null)
+  assert.equal(peekApiCache('/personel/7'), null)
+})
+
+test('forbidden revalidation discards previously cached protected data', async (t) => {
+  session(t)
+  let calls = 0
+  fetch.mock.mockImplementation(async () => ++calls === 1
+    ? Response.json({ data: { id: 8 } })
+    : Response.json({ message: 'Akses ditolak.' }, { status: 403 }))
+  await apiRequest('/personel/8')
+  assert.equal(peekApiCache('/personel/8').data.id, 8)
+  await assert.rejects(apiRequest('/personel/8'), (error) => error instanceof ApiError && error.status === 403)
+  assert.equal(peekApiCache('/personel/8'), null)
+})
+
+test('an old GET cannot repopulate cache after a successful write', async (t) => {
+  session(t)
+  let completeGet
+  fetch.mock.mockImplementation(async (_url, options) => options.method === 'PUT'
+    ? Response.json({ success: true })
+    : new Promise((resolve) => { completeGet = resolve }))
+  const pendingGet = apiRequest('/personel/9')
+  await apiRequest('/personel/9', { method: 'PUT', body: '{}' })
+  completeGet(Response.json({ data: { id: 9 } }))
+  await pendingGet
+  assert.equal(peekApiCache('/personel/9'), null)
 })
 
 test('document request sends bearer token in headers and surfaces forbidden errors', async (t) => {

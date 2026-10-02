@@ -224,6 +224,9 @@ paths:
     get:
       tags: [Referensi]
       summary: Opsi form; unit dibatasi scope pengguna
+      parameters:
+        - { name: only, in: query, description: "bidang_fungsi untuk filter daftar, non_unit untuk referensi form, unit_organisasi untuk pencarian Satker terbatas 25 hasil.", schema: { type: string, enum: [bidang_fungsi, non_unit, unit_organisasi] } }
+        - { name: search, in: query, description: "Wajib saat only=unit_organisasi; cari nama atau kode Satker, minimal 3 karakter.", schema: { type: string, minLength: 3, maxLength: 100 } }
       responses:
         '200':
           description: Data referensi aktif
@@ -947,8 +950,8 @@ components:
             unit_organisasi: { $ref: '#/components/schemas/ReferenceItem' }
             pangkat: { $ref: '#/components/schemas/ReferenceItem' }
             jabatan_utama_aktif: { oneOf: [{ $ref: '#/components/schemas/RiwayatJabatan' }, { type: 'null' }] }
-            kualifikasi: { type: array, items: { $ref: '#/components/schemas/Kualifikasi' } }
-            riwayat_jabatan: { type: array, items: { $ref: '#/components/schemas/RiwayatJabatan' } }
+            jumlah_kualifikasi: { type: integer, description: "Jumlah total; rincian kualifikasi di endpoint terpaginasinya." }
+            penugasan_tambahan_aktif: { type: array, items: { $ref: '#/components/schemas/RiwayatJabatan' } }
             jumlah_kualifikasi_relevan: { type: integer, description: "Fakta, bukan skor merit." }
             durasi_pengalaman_relevan_hari: { type: integer, description: "Fakta, bukan skor merit." }
             ringkasan_operasi:

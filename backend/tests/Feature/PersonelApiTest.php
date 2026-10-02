@@ -127,6 +127,67 @@ class PersonelApiTest extends TestCase
         $this->getJson("/api/v1/personel/{$hidden->id}")->assertForbidden();
     }
 
+    public function test_profile_keeps_history_paginated_in_dedicated_endpoints(): void
+    {
+        $admin = User::factory()->create(['role' => UserRole::AdminSsdm]);
+        Sanctum::actingAs($admin);
+        $personel = Personel::factory()->create();
+        $bidang = BidangFungsi::factory()->create();
+        KualifikasiPersonel::factory()->count(18)->for($personel)->create([
+            'jenis_kualifikasi_id' => JenisKualifikasi::factory()->create()->id,
+            'bidang_fungsi_id' => $bidang->id,
+        ]);
+        RiwayatJabatan::factory()->count(18)->for($personel)->create([
+            'unit_organisasi_id' => $personel->unit_organisasi_id,
+            'bidang_fungsi_id' => $bidang->id,
+            'jenis_penugasan_id' => JenisPenugasan::factory()->create()->id,
+            'is_jabatan_utama' => false,
+        ]);
+
+        $this->getJson("/api/v1/personel/{$personel->id}")
+            ->assertOk()
+            ->assertJsonPath('data.jumlah_kualifikasi', 18)
+            ->assertJsonMissingPath('data.kualifikasi')
+            ->assertJsonMissingPath('data.riwayat_jabatan');
+
+        $this->getJson("/api/v1/personel/{$personel->id}/kualifikasi")
+            ->assertOk()
+            ->assertJsonCount(15, 'data')
+            ->assertJsonPath('meta.total', 18);
+
+        $this->getJson("/api/v1/personel/{$personel->id}/riwayat-jabatan")
+            ->assertOk()
+            ->assertJsonCount(15, 'data')
+            ->assertJsonPath('meta.total', 18);
+    }
+
+    public function test_search_matches_name_or_partial_identity_without_leaking_other_units(): void
+    {
+        $allowedUnit = UnitOrganisasi::factory()->create();
+        $outsideUnit = UnitOrganisasi::factory()->create();
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        UserScope::factory()->for($operator)->for($allowedUnit)->create(['scope_type' => ScopeType::OwnUnit]);
+        $visible = Personel::factory()->for($allowedUnit)->create([
+            'nama_lengkap' => 'Agus Setiawan',
+            'nomor_identitas' => '86010001',
+        ]);
+        Personel::factory()->for($outsideUnit)->create([
+            'nama_lengkap' => 'Agus Rahasia',
+            'nomor_identitas' => '86010002',
+        ]);
+        Sanctum::actingAs($operator);
+
+        $this->getJson('/api/v1/personel?search=Agus')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $visible->id);
+
+        $this->getJson('/api/v1/personel?search=0001')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $visible->id);
+    }
+
     public function test_personnel_identity_must_be_unique_and_rank_must_match_personnel_type(): void
     {
         $admin = User::factory()->create(['role' => UserRole::AdminSsdm]);

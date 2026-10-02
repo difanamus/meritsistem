@@ -21,17 +21,16 @@ class DashboardController extends Controller
     public function __invoke(Request $request, OrganizationalScopeService $scope): JsonResponse
     {
         $user = $request->user();
-        $unitIds = $scope->accessibleUnitIds($user);
-        $personel = Personel::query()->when($unitIds !== null, fn ($query) => $query->whereIn('unit_organisasi_id', $unitIds));
+        $personel = $scope->scopePersonelQuery(Personel::query(), $user);
         $personelIds = (clone $personel)->select('id');
         $statuses = (clone $personel)->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
         $accounts = $user->role === UserRole::Operator ? null : User::query()
             ->when($user->role === UserRole::AdminSsdm, fn ($query) => $query->where('role', UserRole::Operator));
 
         return response()->json(['success' => true, 'message' => 'Ringkasan dashboard berhasil diambil.', 'data' => [
-            'scope' => ['global' => $unitIds === null, 'unit_count' => UnitOrganisasi::query()
-                ->when($unitIds !== null, fn ($query) => $query->whereIn('id', $unitIds))->count()],
-            'personnel' => ['total' => (clone $personel)->count(), 'aktif' => (int) ($statuses['aktif'] ?? 0),
+            'scope' => ['global' => $scope->isGlobal($user), 'unit_count' => $scope
+                ->scopeUnitQuery(UnitOrganisasi::query(), $user)->count()],
+            'personnel' => ['total' => (int) $statuses->sum(), 'aktif' => (int) ($statuses['aktif'] ?? 0),
                 'pensiun' => (int) ($statuses['pensiun'] ?? 0), 'nonaktif' => (int) ($statuses['nonaktif'] ?? 0)],
             'qualifications' => KualifikasiPersonel::query()->whereIn('personel_id', clone $personelIds)->count(),
             'active_positions' => RiwayatJabatan::query()->whereIn('personel_id', clone $personelIds)

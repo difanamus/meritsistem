@@ -24,7 +24,7 @@ class PersonelPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $this->scopeService->accessibleUnitIds($user) !== [];
+        return $this->scopeService->hasAccessibleUnits($user);
     }
 
     /**
@@ -40,7 +40,7 @@ class PersonelPolicy
      */
     public function create(User $user): bool
     {
-        return $this->scopeService->accessibleUnitIds($user) !== [];
+        return $this->scopeService->hasAccessibleUnits($user);
     }
 
     /**

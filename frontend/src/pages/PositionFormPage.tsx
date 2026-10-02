@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { HistoryDocumentField, HistoryField, HistoryReference } from '../components/HistoryFields'
+import { UnitSearchSelect } from '../components/UnitSearchSelect'
 import { ApiError, apiRequest } from '../lib/api'
 import { historyBody, isActivePrimary, pdfError } from '../lib/historyForm'
-import type { Personnel, PositionRecord, ReferenceOptions } from '../types'
+import type { NonUnitReferenceOptions, Personnel, PositionRecord } from '../types'
 
 const emptyValues = { nama_jabatan: '', unit_organisasi_id: '', bidang_fungsi_id: '', jenis_penugasan_id: '', tanggal_mulai: '', tanggal_selesai: '', nivelering: '', keterangan: '' }
 
@@ -13,7 +14,7 @@ export function PositionFormPage() {
   const navigate = useNavigate()
   const editing = !!positionId
   const [person, setPerson] = useState<Personnel | null>(null)
-  const [references, setReferences] = useState<ReferenceOptions | null>(null)
+  const [references, setReferences] = useState<NonUnitReferenceOptions | null>(null)
   const [record, setRecord] = useState<PositionRecord | null>(null)
   const [values, setValues] = useState(emptyValues)
   const [initial, setInitial] = useState<typeof emptyValues | null>(null)
@@ -30,7 +31,7 @@ export function PositionFormPage() {
     document.title = `${editing ? 'Edit' : 'Tambah'} Riwayat Jabatan · Merit SDM POLRI`
     Promise.all([
       apiRequest<{ data: Personnel }>(`/personel/${id}`),
-      apiRequest<{ data: ReferenceOptions }>('/reference-options'),
+      apiRequest<{ data: NonUnitReferenceOptions }>('/reference-options?only=non_unit'),
       editing ? apiRequest<{ data: PositionRecord }>(`/riwayat-jabatan/${positionId}`) : Promise.resolve(null),
     ]).then(([personResponse, referenceResponse, recordResponse]) => {
       if (!active) return
@@ -76,7 +77,7 @@ export function PositionFormPage() {
         <div className="form-section-heading"><span>01</span><div><h2>Informasi jabatan</h2><p>PDF SK tidak wajib. Jenis penugasan mengikuti referensi yang ditetapkan Admin.</p></div></div>
         <fieldset className="form-grid history-fieldset" disabled={submitting}>
           <HistoryField label="Kategori riwayat" error={errors.is_jabatan_utama?.[0]}><select value={primary ? '1' : '0'} disabled={editing} onChange={(event) => setPrimary(event.target.value === '1')}><option value="1">Jabatan utama</option><option value="0">Penugasan tambahan</option></select></HistoryField>
-          <HistoryReference label="Unit jabatan" value={values.unit_organisasi_id} current={record?.unit_organisasi} options={references.unit_organisasi} disabled={activePrimary} error={errors.unit_organisasi_id?.[0]} onChange={(value) => setField('unit_organisasi_id', value)} />
+          <UnitSearchSelect label="Unit jabatan" value={values.unit_organisasi_id} current={record?.unit_organisasi ?? person.unit_organisasi} disabled={activePrimary} error={errors.unit_organisasi_id?.[0]} onChange={(value) => setField('unit_organisasi_id', value)} />
           <HistoryField label="Nama jabatan" error={errors.nama_jabatan?.[0]} wide><input required maxLength={255} value={values.nama_jabatan} onChange={(event) => setField('nama_jabatan', event.target.value)} /></HistoryField>
           <HistoryReference label="Bidang / fungsi" value={values.bidang_fungsi_id} current={record?.bidang_fungsi} options={references.bidang_fungsi} error={errors.bidang_fungsi_id?.[0]} onChange={(value) => setField('bidang_fungsi_id', value)} />
           <HistoryReference label="Jenis penugasan" value={values.jenis_penugasan_id} current={record?.jenis_penugasan} options={references.jenis_penugasan} error={errors.jenis_penugasan_id?.[0]} onChange={(value) => setField('jenis_penugasan_id', value)} />

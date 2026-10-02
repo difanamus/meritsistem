@@ -3,10 +3,12 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { ApiError, apiRequest } from '../lib/api'
-import type { ReferenceOptions, User, UserRole } from '../types'
+import { UnitSearchSelect } from '../components/UnitSearchSelect'
+import type { ReferenceItem, User, UserRole } from '../types'
 
 interface ScopeDraft {
   unit_organisasi_id: string
+  unit_organisasi?: ReferenceItem | null
   scope_type: 'own_unit' | 'unit_and_descendants'
   is_active: boolean
   berlaku_mulai: string
@@ -32,7 +34,6 @@ export function UserFormPage() {
   const navigate = useNavigate()
   const { user: actor } = useAuth()
   const [form, setForm] = useState<UserForm>(initialForm)
-  const [references, setReferences] = useState<ReferenceOptions | null>(null)
   const [loading, setLoading] = useState(isEdit)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -40,13 +41,9 @@ export function UserFormPage() {
 
   useEffect(() => {
     document.title = `${isEdit ? 'Edit' : 'Tambah'} Pengguna · Merit SDM POLRI`
-    const referencesRequest = apiRequest<{ data: ReferenceOptions }>('/reference-options').then((response) => setReferences(response.data))
-    if (!id) {
-      void referencesRequest
-      return
-    }
-    void Promise.all([referencesRequest, apiRequest<{ data: User }>(`/users/${id}`)])
-      .then(([, response]) => setForm({
+    if (!id) return
+    void apiRequest<{ data: User }>(`/users/${id}`)
+      .then((response) => setForm({
         name: response.data.name,
         email: response.data.email,
         password: '',
@@ -55,6 +52,7 @@ export function UserFormPage() {
         is_active: response.data.is_active,
         scopes: response.data.scopes.length ? response.data.scopes.map((scope) => ({
           unit_organisasi_id: String(scope.unit_organisasi.id),
+          unit_organisasi: scope.unit_organisasi,
           scope_type: scope.scope_type,
           is_active: scope.is_active,
           berlaku_mulai: scope.berlaku_mulai ?? '',
@@ -79,7 +77,7 @@ export function UserFormPage() {
     setErrors({})
     const payload = {
       ...form,
-      scopes: form.role === 'operator' ? form.scopes.map((scope) => ({ ...scope, unit_organisasi_id: Number(scope.unit_organisasi_id), berlaku_mulai: scope.berlaku_mulai || null, berlaku_sampai: scope.berlaku_sampai || null })) : [],
+      scopes: form.role === 'operator' ? form.scopes.map((scope) => ({ unit_organisasi_id: Number(scope.unit_organisasi_id), scope_type: scope.scope_type, is_active: scope.is_active, berlaku_mulai: scope.berlaku_mulai || null, berlaku_sampai: scope.berlaku_sampai || null })) : [],
     }
     try {
       await apiRequest(isEdit ? `/users/${id}` : '/users', { method: isEdit ? 'PUT' : 'POST', body: JSON.stringify(payload) })
@@ -118,7 +116,7 @@ export function UserFormPage() {
         <div className="scope-editor">{form.scopes.map((scope, index) => <div className="scope-editor-row" key={index}>
           <div className="scope-row-title"><strong>Scope {String(index + 1).padStart(2, '0')}</strong>{form.scopes.length > 1 && <button type="button" onClick={() => removeScope(index)}>Hapus</button>}</div>
           <div className="form-grid">
-            <label className="wide"><span>Unit organisasi / Satker</span><select value={scope.unit_organisasi_id} onChange={(event) => updateScope(index, 'unit_organisasi_id', event.target.value)} required><option value="">Pilih unit</option>{references?.unit_organisasi.map((unit) => <option key={unit.id} value={unit.id}>{unit.nama}</option>)}</select>{fieldError(`scopes.${index}.unit_organisasi_id`) && <small>{fieldError(`scopes.${index}.unit_organisasi_id`)}</small>}</label>
+            <UnitSearchSelect label="Unit organisasi / Satker" value={scope.unit_organisasi_id} current={scope.unit_organisasi} onChange={(value, unit) => setForm((current) => ({ ...current, scopes: current.scopes.map((item, scopeIndex) => scopeIndex === index ? { ...item, unit_organisasi_id: value, unit_organisasi: unit ?? null } : item) }))} error={fieldError(`scopes.${index}.unit_organisasi_id`)} />
             <label><span>Jenis cakupan</span><select value={scope.scope_type} onChange={(event) => updateScope(index, 'scope_type', event.target.value as ScopeDraft['scope_type'])}><option value="own_unit">Unit sendiri</option><option value="unit_and_descendants">Unit dan seluruh bawahannya</option></select></label>
             <label><span>Status scope</span><select value={scope.is_active ? 'active' : 'inactive'} onChange={(event) => updateScope(index, 'is_active', event.target.value === 'active')}><option value="active">Aktif</option><option value="inactive">Nonaktif</option></select></label>
             <label><span>Berlaku mulai (opsional)</span><input type="date" value={scope.berlaku_mulai} onChange={(event) => updateScope(index, 'berlaku_mulai', event.target.value)}/></label>

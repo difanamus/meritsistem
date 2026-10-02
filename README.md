@@ -46,7 +46,7 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 - PHP 8.3 atau lebih baru dengan ekstensi umum Laravel dan `pdo_pgsql`.
 - Composer 2.
 - Node.js 22.18 atau lebih baru dan npm (Node 24 direkomendasikan untuk test bawaan tanpa dependency tambahan).
-- PostgreSQL 17, langsung atau melalui Docker Desktop.
+- PostgreSQL 17, langsung atau melalui Docker Desktop. Migrasi pencarian memakai ekstensi bawaan `pg_trgm`; pengguna database perlu izin membuat ekstensi, atau administrator database perlu mengaktifkannya lebih dulu.
 
 ## Menjalankan PostgreSQL dengan Docker
 
@@ -152,6 +152,14 @@ Narasi singkat demo Point 5: buka profil personel dan tunjukkan tiga riwayat yan
 - ERD dan diagram alur: [`docs/architecture.md`](docs/architecture.md)
 
 Gunakan endpoint `POST /api/v1/auth/login`, simpan nilai `token`, lalu kirim header `Authorization: Bearer <token>` pada endpoint terproteksi.
+
+## Catatan kapasitas dan loading
+
+- Daftar personel berhalaman (default 15, maksimum 100 record per respons). Misal ada 100.000 personel, halaman pertama tetap mengirim paling banyak 15 record, bukan 100.000; jumlah halaman dan hasil filter dihitung di database. Lima jenis riwayat profil juga diminta saat tab pertama dibuka, bukan semuanya saat profil masuk.
+- Daftar, profil, dashboard, dan halaman riwayat yang baru dikunjungi memakai cache memori browser singkat (maksimum 50 respons, kedaluwarsa setelah 60 detik). Saat kembali, data tersimpan langsung ditampilkan sementara permintaan baru menyegarkannya di belakang layar. Cache dibersihkan setelah perubahan data, pergantian akun/logout, atau respons akses ditolak. Muat ulang browser tetap melakukan pemeriksaan autentikasi dan permintaan pertama halaman baru tetap membutuhkan loading.
+- Pencarian Satker di formulir menunggu minimal 3 karakter, lalu mengambil maksimum 25 unit yang sesuai scope pengguna. Misal ada 10.000 unit, satu pencarian merender maksimum 25 opsi—batas 400 kali lebih kecil dibanding daftar semua unit. Ini batas jumlah data respons/DOM, **bukan** klaim waktu eksekusi 400 kali lebih cepat.
+- Scope Operator dihitung dengan recursive CTE di PostgreSQL/SQLite; aplikasi tidak membangun daftar seluruh unit turunan di PHP untuk setiap daftar/dashboard. PostgreSQL memakai indeks GIN `pg_trgm` untuk pencarian substring nama/NRP dan nama/kode unit. Untuk kebutuhan pencarian spesifik, gunakan kata kunci yang cukup panjang agar indeks efektif.
+- Batas respons tidak otomatis membatasi seluruh kerja database: `paginate()` tetap melakukan exact count, halaman offset jauh dapat lebih mahal, dan urut menurut agregat kualifikasi/durasi/operasi dapat menghitung banyak kandidat. Pada data nasional, ukur `EXPLAIN (ANALYZE, BUFFERS)` dengan data yang representatif sebelum menentukan kebutuhan cursor pagination, ringkasan terindeks, atau cache. Belum ada klaim kapasitas/latensi nasional tanpa pengukuran tersebut.
 
 ## Batasan prototype
 

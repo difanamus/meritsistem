@@ -107,4 +107,27 @@ class AuthorizationScopeTest extends TestCase
 
         $this->assertEqualsCanonicalizing($visibleIds, $actualIds);
     }
+
+    public function test_combined_scopes_include_only_active_descendants_and_owned_units(): void
+    {
+        $root = UnitOrganisasi::factory()->create();
+        $child = UnitOrganisasi::factory()->for($root, 'parent')->create();
+        $inactiveChild = UnitOrganisasi::factory()->for($root, 'parent')->create(['is_active' => false]);
+        $inactiveGrandchild = UnitOrganisasi::factory()->for($inactiveChild, 'parent')->create();
+        $owned = UnitOrganisasi::factory()->create();
+        $ownedChild = UnitOrganisasi::factory()->for($owned, 'parent')->create();
+        $operator = User::factory()->create(['role' => UserRole::Operator]);
+        UserScope::factory()->for($operator)->for($root)->create(['scope_type' => ScopeType::UnitAndDescendants]);
+        UserScope::factory()->for($operator)->for($owned)->create(['scope_type' => ScopeType::OwnUnit]);
+        $scope = app(OrganizationalScopeService::class);
+
+        $this->assertEqualsCanonicalizing([$root->id, $child->id, $owned->id], $scope->accessibleUnitIds($operator));
+        $this->assertFalse($scope->canAccessUnit($operator, $inactiveChild->id));
+        $this->assertFalse($scope->canAccessUnit($operator, $inactiveGrandchild->id));
+        $this->assertFalse($scope->canAccessUnit($operator, $ownedChild->id));
+        $this->assertEqualsCanonicalizing(
+            [$root->id, $child->id, $owned->id],
+            $scope->scopeUnitQuery(UnitOrganisasi::query(), $operator)->pluck('id')->all(),
+        );
+    }
 }

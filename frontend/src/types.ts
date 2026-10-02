@@ -96,6 +96,8 @@ export interface ReferenceOptions {
   jenis_penugasan: ReferenceItem[]
 }
 
+export type NonUnitReferenceOptions = Omit<ReferenceOptions, 'unit_organisasi'>
+
 export interface PrivateDocument {
   nama_asli: string
   mime: string

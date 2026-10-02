@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { useAuth } from '../auth/useAuth'
-import { ApiError, apiRequest, toQueryString } from '../lib/api'
+import { ApiError, apiRequest, peekApiCache, toQueryString } from '../lib/api'
 import type { PaginationMeta, Personnel, ReferenceOptions } from '../types'
 
 interface PersonnelResponse {
@@ -15,10 +15,7 @@ export function PersonnelListPage() {
   const { user } = useAuth()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [personnel, setPersonnel] = useState<Personnel[]>([])
-  const [meta, setMeta] = useState<PaginationMeta | null>(null)
-  const [references, setReferences] = useState<ReferenceOptions | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [references, setReferences] = useState<Pick<ReferenceOptions, 'bidang_fungsi'> | null>(() => peekApiCache<{ data: Pick<ReferenceOptions, 'bidang_fungsi'> }>('/reference-options?only=bidang_fungsi')?.data ?? null)
   const [error, setError] = useState('')
   const [searchDraft, setSearchDraft] = useState(searchParams.get('search') ?? '')
   const [regionDraft, setRegionDraft] = useState(searchParams.get('operasi_wilayah') ?? '')
@@ -38,31 +35,38 @@ export function PersonnelListPage() {
     page: searchParams.get('page') || '1',
     per_page: 10,
   }), [searchParams])
+  const queryKey = toQueryString(query)
+  const cachedPage = peekApiCache<PersonnelResponse>(`/personel${queryKey}`)
+  const [result, setResult] = useState<{ key: string; response: PersonnelResponse } | null>(() => cachedPage ? { key: queryKey, response: cachedPage } : null)
+  const [loadedQuery, setLoadedQuery] = useState<string | null>(() => cachedPage ? queryKey : null)
+  const visible = result?.key === queryKey ? result.response : cachedPage
+  const personnel = visible?.data ?? []
+  const meta = visible?.meta ?? null
+  const loading = loadedQuery !== queryKey && !visible
 
   useEffect(() => {
     document.title = 'Data Personel · Merit SDM POLRI'
-    apiRequest<{ data: ReferenceOptions }>('/reference-options')
+    apiRequest<{ data: Pick<ReferenceOptions, 'bidang_fungsi'> }>('/reference-options?only=bidang_fungsi')
       .then((response) => setReferences(response.data))
       .catch(() => setReferences(null))
   }, [])
 
   useEffect(() => {
     let active = true
-    apiRequest<PersonnelResponse>(`/personel${toQueryString(query)}`)
+    apiRequest<PersonnelResponse>(`/personel${queryKey}`)
       .then((response) => {
         if (!active) return
         setError('')
-        setPersonnel(response.data)
-        setMeta(response.meta)
+        setResult({ key: queryKey, response })
       })
       .catch((exception) => {
-        if (active) setError(exception instanceof ApiError ? exception.message : 'Data tidak dapat dimuat.')
+        if (active) { if (exception instanceof ApiError && [401, 403].includes(exception.status)) setResult(null); setError(exception instanceof ApiError ? exception.message : 'Data tidak dapat dimuat.') }
       })
       .finally(() => {
-        if (active) setLoading(false)
+        if (active) setLoadedQuery(queryKey)
       })
     return () => { active = false }
-  }, [query])
+  }, [queryKey])
 
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams)

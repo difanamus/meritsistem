@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, apiRequest } from '../lib/api'
-import type { Personnel, ReferenceOptions } from '../types'
+import { UnitSearchSelect } from '../components/UnitSearchSelect'
+import type { NonUnitReferenceOptions, Personnel } from '../types'
 
 interface FormState {
   jenis_personel: 'polri' | 'pns'; nomor_identitas: string; nama_lengkap: string; pangkat_id: string
@@ -15,14 +16,15 @@ const initialForm: FormState = { jenis_personel: 'polri', nomor_identitas: '', n
 
 export function PersonnelFormPage() {
   const { id } = useParams(); const isEdit = Boolean(id); const navigate = useNavigate()
-  const [form, setForm] = useState(initialForm); const [references, setReferences] = useState<ReferenceOptions | null>(null)
+  const [form, setForm] = useState(initialForm); const [references, setReferences] = useState<NonUnitReferenceOptions | null>(null)
+  const [currentUnitName, setCurrentUnitName] = useState('')
   const [errors, setErrors] = useState<Record<string, string[]>>({}); const [error, setError] = useState('')
   const [loading, setLoading] = useState(isEdit); const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     document.title = `${isEdit ? 'Edit' : 'Tambah'} Personel · Merit SDM POLRI`
-    void apiRequest<{ data: ReferenceOptions }>('/reference-options').then((response) => setReferences(response.data))
-    if (id) void apiRequest<{ data: Personnel }>(`/personel/${id}`).then(({ data: person }) => setForm({ jenis_personel: person.jenis_personel, nomor_identitas: person.nomor_identitas, nama_lengkap: person.nama_lengkap, pangkat_id: String(person.pangkat.id), tempat_lahir: person.tempat_lahir, tanggal_lahir: person.tanggal_lahir, unit_organisasi_id: String(person.unit_organisasi.id), status: person.status, nama_jabatan: person.jabatan_utama_aktif?.nama_jabatan ?? '', bidang_fungsi_id: '', jenis_penugasan_id: '', tanggal_mulai: '' })).catch((exception) => setError(exception instanceof ApiError ? exception.message : 'Data tidak dapat dimuat.')).finally(() => setLoading(false))
+    void apiRequest<{ data: NonUnitReferenceOptions }>('/reference-options?only=non_unit').then((response) => setReferences(response.data))
+    if (id) void apiRequest<{ data: Personnel }>(`/personel/${id}`).then(({ data: person }) => { setCurrentUnitName(person.unit_organisasi.nama); setForm({ jenis_personel: person.jenis_personel, nomor_identitas: person.nomor_identitas, nama_lengkap: person.nama_lengkap, pangkat_id: String(person.pangkat.id), tempat_lahir: person.tempat_lahir, tanggal_lahir: person.tanggal_lahir, unit_organisasi_id: String(person.unit_organisasi.id), status: person.status, nama_jabatan: person.jabatan_utama_aktif?.nama_jabatan ?? '', bidang_fungsi_id: '', jenis_penugasan_id: '', tanggal_mulai: '' }) }).catch((exception) => setError(exception instanceof ApiError ? exception.message : 'Data tidak dapat dimuat.')).finally(() => setLoading(false))
   }, [id, isEdit])
 
   const ranks = useMemo(() => references?.pangkat.filter((rank) => rank.jenis_personel === form.jenis_personel) ?? [], [references, form.jenis_personel])
@@ -58,7 +60,7 @@ export function PersonnelFormPage() {
         <label><span>Tanggal lahir</span><input type="date" value={form.tanggal_lahir} onChange={(e) => setField('tanggal_lahir', e.target.value)} required />{fieldError('tanggal_lahir') && <small>{fieldError('tanggal_lahir')}</small>}</label>
       </div></div></section>
       <section className="form-section-shell reveal delay-two"><div className="form-section-core"><div className="form-section-heading"><span>02</span><div><h2>{isEdit ? 'Penempatan saat ini' : 'Jabatan utama awal'}</h2><p>{isEdit ? 'Informasi unit ditampilkan sebagai referensi.' : 'Setiap personel aktif wajib memiliki jabatan.'}</p></div></div><div className="form-grid">
-        <label className="wide"><span>Unit organisasi / Satker</span><select disabled={isEdit} value={form.unit_organisasi_id} onChange={(e) => setField('unit_organisasi_id', e.target.value)} required={!isEdit}><option value="">Pilih unit</option>{references?.unit_organisasi.map((unit) => <option key={unit.id} value={unit.id}>{unit.nama}</option>)}</select>{fieldError('unit_organisasi_id') && <small>{fieldError('unit_organisasi_id')}</small>}</label>
+        {isEdit ? <label className="wide"><span>Unit organisasi / Satker</span><input value={currentUnitName} disabled /></label> : <UnitSearchSelect label="Unit organisasi / Satker" value={form.unit_organisasi_id} onChange={(value) => setField('unit_organisasi_id', value)} error={fieldError('unit_organisasi_id')} />}
         {!isEdit && <><label className="wide"><span>Nama jabatan</span><input value={form.nama_jabatan} onChange={(e) => setField('nama_jabatan', e.target.value)} placeholder="Contoh: Banit Sat Intelkam" required /></label><label><span>Bidang / fungsi</span><select value={form.bidang_fungsi_id} onChange={(e) => setField('bidang_fungsi_id', e.target.value)} required><option value="">Pilih fungsi</option>{references?.bidang_fungsi.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label><label><span>Jenis penugasan</span><select value={form.jenis_penugasan_id} onChange={(e) => setField('jenis_penugasan_id', e.target.value)} required><option value="">Pilih jenis</option>{references?.jenis_penugasan.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label><label><span>Tanggal mulai</span><input type="date" value={form.tanggal_mulai} onChange={(e) => setField('tanggal_mulai', e.target.value)} required /></label></>}
       </div></div></section>
       <div className="form-actions"><Link to={isEdit ? `/personel/${id}` : '/personel'} className="secondary-cta">Batal</Link><button className="primary-cta" disabled={submitting}><span>{submitting ? 'Menyimpan…' : 'Simpan personel'}</span><span className="cta-icon">✓</span></button></div>

@@ -16,6 +16,8 @@ Checkpoint Point 5: penugasan operasi, prestasi, dan penghargaan resmi terpisah 
 
 Checkpoint Point 6: kontrak respons API sukses/error dirapikan, termasuk 401 tanpa header JSON, 403, 404, 405, 422, 429, dan 500 tanpa bocoran detail internal. CORS kini terbatas pada origin frontend lokal yang dapat dikonfigurasi. Smoke QA browser mencakup System Admin, Admin SSDM, Operator Polda, Operator Polres, akses di luar scope, dan hasil pencarian kosong; tidak ada error konsol browser. Seluruh 126 test / 668 assertion backend lulus di SQLite dan PostgreSQL 17; 11 test frontend, lint, build, Pint, serta 249 referensi lokal OpenAPI lulus. Database lokal memiliki satu personel tambahan non-seed yang dibiarkan utuh. Uji setup/clone bersih, seluruh request Postman, Git publik, dan video tetap tahap berikutnya.
 
+Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikasi dan riwayat jabatan sekaligus; detail awal tetap memuat jumlah kualifikasi dan jabatan aktif, sedangkan lima kategori riwayat dimuat saat tab pertama dibuka dan dipertahankan selama profil terbuka. Daftar personel hanya meminta opsi bidang fungsi, tanpa mengunduh seluruh pohon unit. Formulir tanpa pemilihan Satker memakai opsi `non_unit`; formulir yang memilih Satker kini mencari di server dengan minimal tiga karakter dan maksimum 25 hasil sesuai scope, bukan merender seluruh unit nasional. Animasi halaman dipersingkat. Pada data lokal, contoh respons profil turun dari 2.621 ke 997 byte dan opsi daftar dari 4.205 ke 616 byte. Scope Operator memakai recursive CTE di database untuk penyaringan personel, unit, dan dashboard, bukan menyalin seluruh unit aktif ke PHP; pencarian substring nama/NRP serta nama/kode unit mendapat indeks GIN `pg_trgm` parsial. Navigasi balik daftar ↔ profil kini menampilkan cache sementara secara instan dengan revalidasi di belakang layar; cache berumur pendek dan dibatalkan saat data/akun berubah atau akses ditolak. Waktu endpoint ringan `/auth/me` masih sekitar 240–285 ms pada server development, sehingga angka latensi akhir tidak boleh diklaim sebagai hasil database saja. Seluruh 132 test / 711 assertion backend lulus di SQLite dan database terisolasi PostgreSQL 17, serta 14 test frontend, lint, build, dan Pint lulus; smoke browser menunjukkan tab yang pernah dibuka serta navigasi balik daftar ↔ profil tanpa loader. Tanpa simulasi data besar, kapasitas nasional belum terukur dan bukan klaim hasil tahap ini.
+
 - [x] Membaca `Paparan Uji Pemrograman.pdf` secara lengkap.
 - [x] Membaca `Soal CRUD.pdf` secara lengkap.
 - [x] Menentukan technology stack: Laravel, React + Vite, PostgreSQL, dan Sanctum.
@@ -268,6 +270,22 @@ Checkpoint Point 6: kontrak respons API sukses/error dirapikan, termasuk 401 tan
 - [x] Menguji aplikasi dengan data kosong dan pencarian tanpa hasil.
 - [x] Menguji aplikasi dengan seed data.
 - [ ] Memperbaiki seluruh error blocker dan high-priority.
+
+## N.1 Optimasi Loading Pra-Finishing
+
+- [x] Mengukur baseline endpoint lokal tanpa mengubah data demo.
+- [x] Menghilangkan riwayat tidak terbatas dan duplikat dari respons profil.
+- [x] Memuat riwayat saat tab dibuka dan mempertahankan data tab yang sudah dikunjungi.
+- [x] Menghindari pengambilan seluruh hierarki unit untuk filter daftar personel.
+- [x] Mempercepat animasi halaman yang menunda tampilan konten.
+- [x] Menguji kontrak respons, build, lint, dan perilaku tab di browser.
+- [x] Memindahkan resolusi scope turunan Satker ke recursive CTE database dan menghindari `WHERE IN` berisi seluruh unit nasional di query daftar/dashboard.
+- [x] Menambahkan indeks PostgreSQL `pg_trgm` untuk pola pencarian substring nama dan NRP/NIP yang benar-benar dipakai API.
+- [x] Mengganti dropdown Satker nasional pada formulir dengan pencarian server yang dibatasi 25 hasil dan scope; menambahkan indeks pencarian unit.
+- [x] Menghitung batas transfer/DOM untuk contoh 100.000 personel dan 10.000 unit, serta mendokumentasikan kerja database yang masih tumbuh.
+- [x] Menyimpan respons GET berumur pendek di memori untuk menampilkan daftar, profil, dashboard, dan riwayat yang pernah dibuka tanpa flash loading saat navigasi balik; tetap revalidasi di belakang layar dan batalkan cache saat mutasi/akun berubah/akses ditolak.
+- [x] Menjalankan seluruh test di SQLite dan PostgreSQL 17 serta menerapkan migrasi indeks pada database lokal tanpa reset data.
+- [ ] Mengevaluasi exact-count pagination dan pengurutan agregat jika pengukuran pemakaian riil kelak menunjukkan keduanya mahal; bukan blocker demo lokal.
 
 ## O. Dokumentasi API
 
