@@ -413,6 +413,13 @@ Verifikasi tambahan pangkat: 162 test / 865 assertion backend lulus pada SQLite 
 
 Checkpoint dataset demo: `DemoPersonnelSeeder` tidak masuk seed instalasi standar; 100 data bertanda DEMO diterapkan ke database lokal (95 tampil dan 5 arsip), tanpa reset, penambahan akun, atau perubahan scope. Pendidikan wajib dan variasi riwayat tersedia; merit belum diverifikasi dan tanpa PDF palsu. Delapan test tambahan mencakup komposisi data, menjalankan ulang setelah edit/arsip, benturan identitas, prasyarat, rollback konflik unit, production guard, instalasi standar tetap kecil, pagination/filter/scope API. Seluruh 170 test / 947 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; Pint lulus. Ini dataset demonstrasi, bukan hasil uji beban nasional.
 
+### Perbaikan panduan clean install dan tes CORS
+
+- [x] Tes preflight mengatur origin sendiri, mencakup port 5173/5174 dan penolakan origin asing, tanpa bergantung pada `.env` developer.
+- [x] README memakai `migrate --seed` untuk instalasi baru, memperingatkan risiko `migrate:fresh` dan seed ulang pada instalasi lama, serta memakai `npm ci` dan port Vite eksplisit dengan `--strictPort`.
+- [x] Contoh konfigurasi port alternatif menjelaskan `FRONTEND_ORIGINS`, `VITE_API_URL`, pembersihan config dan restart layanan.
+- [x] Verifikasi perbaikan: 9 tes API quality / 41 assertion lulus dengan konfigurasi standar dan origin lingkungan 5174; seluruh 207 tes backend / 1221 assertion lulus pada SQLite dengan origin lingkungan 5174; Pint lulus. Konfigurasi CORS runtime dan database aplikasi tidak diubah.
+
 - [ ] Memastikan aplikasi berjalan lokal.
 - [ ] Memastikan seluruh requirement wajib terpenuhi.
 - [ ] Memastikan seluruh test penting lulus.

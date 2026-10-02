@@ -77,12 +77,14 @@ cd backend
 Copy-Item .env.example .env
 composer install
 php artisan key:generate
-php artisan migrate:fresh --seed
+php artisan migrate --seed
 php artisan storage:link
 php artisan serve --host=127.0.0.1 --port=8000
 ```
 
 API tersedia pada `http://127.0.0.1:8000/api/v1`.
+
+Perintah di atas untuk instalasi awal pada database baru. Untuk memperbarui instalasi yang sudah berisi data, gunakan `php artisan migrate` tanpa seed ulang, karena seed dasar dapat mengatur ulang akun demo. **Jangan gunakan `migrate:fresh` pada database yang ingin dipertahankan:** perintah tersebut menghapus seluruh tabel beserta datanya.
 
 ### Data demo tambahan (opsional)
 
@@ -105,13 +107,26 @@ Buka terminal kedua:
 ```powershell
 cd frontend
 Copy-Item .env.example .env
-npm install
-npm run dev -- --host 127.0.0.1
+npm ci
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 ```
 
 Antarmuka tersedia pada `http://127.0.0.1:5173`.
 
 Backend menerima permintaan browser dari `http://127.0.0.1:5173` dan `http://localhost:5173` secara default. Jika frontend dijalankan pada origin lain, atur daftar `FRONTEND_ORIGINS` (dipisahkan koma) di `backend/.env`, lalu jalankan `php artisan config:clear` dan restart server backend. API memakai bearer token, bukan cookie lintas-origin.
+
+`--strictPort` menghentikan Vite jika port sudah dipakai, sehingga tidak diam-diam berpindah port dan menyebabkan kesalahan CORS. Hentikan aplikasi yang memakai port tersebut atau pilih port lain secara eksplisit. Origin harus cocok lengkap: protokol, host, dan port; `localhost` berbeda dari `127.0.0.1`.
+
+### Jika port default sudah dipakai
+
+Contoh menjalankan backend pada `8001` dan frontend pada `5174`:
+
+1. Atur `backend/.env`: `APP_URL=http://127.0.0.1:8001` dan `FRONTEND_ORIGINS=http://127.0.0.1:5174,http://localhost:5174`.
+2. Atur `frontend/.env`: `VITE_API_URL=http://127.0.0.1:8001/api/v1`.
+3. Dari folder `backend`, jalankan `php artisan config:clear`, kemudian `php artisan serve --host=127.0.0.1 --port=8001`.
+4. Dari folder `frontend`, jalankan `npm run dev -- --host 127.0.0.1 --port 5174 --strictPort`.
+
+Buka `http://127.0.0.1:5174`. Setelah mengubah `.env`, restart layanan terkait agar konfigurasi baru terbaca. `FRONTEND_ORIGINS` adalah alamat halaman frontend yang diizinkan mengakses API, sedangkan `VITE_API_URL` adalah alamat API backend. Jangan mengganti pembatasan origin dengan wildcard `*` untuk mengatasi salah port.
 
 ## Akun demo
 

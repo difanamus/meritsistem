@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ApiQualityTest extends TestCase
@@ -81,15 +82,26 @@ class ApiQualityTest extends TestCase
         ])->assertStatus(429)->assertJsonPath('success', false)->assertJsonStructure(['message']);
     }
 
-    public function test_preflight_allows_only_the_configured_local_frontend_origin(): void
+    public static function frontendOrigins(): array
     {
+        return [
+            'default port' => ['http://127.0.0.1:5173', 'http://localhost:5173'],
+            'alternate port' => ['http://127.0.0.1:5174', 'http://localhost:5174'],
+        ];
+    }
+
+    #[DataProvider('frontendOrigins')]
+    public function test_preflight_allows_only_the_configured_local_frontend_origin(string $origin, string $localhostOrigin): void
+    {
+        config(['cors.allowed_origins' => [$origin, $localhostOrigin]]);
+
         $allowed = $this->withHeaders([
-            'Origin' => 'http://127.0.0.1:5173',
+            'Origin' => $origin,
             'Access-Control-Request-Method' => 'POST',
             'Access-Control-Request-Headers' => 'authorization,content-type',
         ])->options('/api/v1/auth/login');
 
-        $allowed->assertNoContent()->assertHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:5173');
+        $allowed->assertNoContent()->assertHeader('Access-Control-Allow-Origin', $origin);
 
         $denied = $this->withHeaders([
             'Origin' => 'http://untrusted.example.test',
