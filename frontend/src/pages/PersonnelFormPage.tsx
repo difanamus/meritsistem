@@ -12,10 +12,10 @@ interface FormState {
   jenis_personel: 'polri' | 'pns'; nomor_identitas: string; nama_lengkap: string; pangkat_id: string
   tempat_lahir: string; tanggal_lahir: string; unit_organisasi_id: string
   status: 'aktif' | 'pensiun' | 'nonaktif'; nama_jabatan: string; bidang_fungsi_id: string
-  jenis_penugasan_id: string; tanggal_mulai: string
+  jenis_penugasan_id: string; tanggal_mulai: string; nivelering: string; keterangan: string
 }
 
-const initialForm: FormState = { jenis_personel: 'polri', nomor_identitas: '', nama_lengkap: '', pangkat_id: '', tempat_lahir: '', tanggal_lahir: '', unit_organisasi_id: '', status: 'aktif', nama_jabatan: '', bidang_fungsi_id: '', jenis_penugasan_id: '', tanggal_mulai: '' }
+const initialForm: FormState = { jenis_personel: 'polri', nomor_identitas: '', nama_lengkap: '', pangkat_id: '', tempat_lahir: '', tanggal_lahir: '', unit_organisasi_id: '', status: 'aktif', nama_jabatan: '', bidang_fungsi_id: '', jenis_penugasan_id: '', tanggal_mulai: '', nivelering: '', keterangan: '' }
 
 export function PersonnelFormPage() {
   const { id } = useParams(); const isEdit = Boolean(id); const navigate = useNavigate()
@@ -29,7 +29,7 @@ export function PersonnelFormPage() {
   useEffect(() => {
     document.title = `${isEdit ? 'Edit' : 'Tambah'} Personel · Merit SDM POLRI`
     void apiRequest<{ data: NonUnitReferenceOptions }>('/reference-options?only=non_unit').then((response) => setReferences(response.data)).catch((exception) => setError(exception instanceof ApiError ? exception.message : 'Referensi tidak dapat dimuat. Muat ulang halaman untuk mencoba lagi.'))
-    if (id) void apiRequest<{ data: Personnel }>(`/personel/${id}`).then(({ data: person }) => { setCurrentUnitName(person.unit_organisasi.nama); setForm({ jenis_personel: person.jenis_personel, nomor_identitas: person.nomor_identitas, nama_lengkap: person.nama_lengkap, pangkat_id: String(person.pangkat.id), tempat_lahir: person.tempat_lahir, tanggal_lahir: person.tanggal_lahir, unit_organisasi_id: String(person.unit_organisasi.id), status: person.status, nama_jabatan: person.jabatan_utama_aktif?.nama_jabatan ?? '', bidang_fungsi_id: '', jenis_penugasan_id: '', tanggal_mulai: '' }) }).catch((exception) => setError(exception instanceof ApiError ? exception.message : 'Data tidak dapat dimuat.')).finally(() => setLoading(false))
+    if (id) void apiRequest<{ data: Personnel }>(`/personel/${id}`).then(({ data: person }) => { setCurrentUnitName(person.unit_organisasi.nama); setForm({ ...initialForm, jenis_personel: person.jenis_personel, nomor_identitas: person.nomor_identitas, nama_lengkap: person.nama_lengkap, pangkat_id: String(person.pangkat.id), tempat_lahir: person.tempat_lahir, tanggal_lahir: person.tanggal_lahir, unit_organisasi_id: String(person.unit_organisasi.id), status: person.status, nama_jabatan: person.jabatan_utama_aktif?.nama_jabatan ?? '' }) }).catch((exception) => setError(exception instanceof ApiError ? exception.message : 'Data tidak dapat dimuat.')).finally(() => setLoading(false))
   }, [id, isEdit])
 
   const ranks = useMemo(() => references?.pangkat.filter((rank) => rank.jenis_personel === form.jenis_personel) ?? [], [references, form.jenis_personel])
@@ -49,18 +49,17 @@ export function PersonnelFormPage() {
     }
     setSubmitting(true)
     const common = { jenis_personel: form.jenis_personel, nomor_identitas: form.nomor_identitas, nama_lengkap: form.nama_lengkap, pangkat_id: Number(form.pangkat_id), tempat_lahir: form.tempat_lahir, tanggal_lahir: form.tanggal_lahir, status: form.status }
-    const payload = isEdit ? common : { ...common, unit_organisasi_id: Number(form.unit_organisasi_id), jabatan_utama: { nama_jabatan: form.nama_jabatan, bidang_fungsi_id: Number(form.bidang_fungsi_id), jenis_penugasan_id: Number(form.jenis_penugasan_id), tanggal_mulai: form.tanggal_mulai } }
     const body = new FormData()
     if (!isEdit) {
       for (const [key, value] of Object.entries(common)) body.append(key, String(value))
       body.append('unit_organisasi_id', form.unit_organisasi_id)
-      if (form.status === 'aktif') appendRegistrationData(body, 'jabatan_utama', { values: { nama_jabatan: form.nama_jabatan, bidang_fungsi_id: form.bidang_fungsi_id, jenis_penugasan_id: form.jenis_penugasan_id, tanggal_mulai: form.tanggal_mulai }, file: positionFile }, 'dokumen_sk')
+      if (form.status === 'aktif') appendRegistrationData(body, 'jabatan_utama', { values: { nama_jabatan: form.nama_jabatan, bidang_fungsi_id: form.bidang_fungsi_id, jenis_penugasan_id: form.jenis_penugasan_id, tanggal_mulai: form.tanggal_mulai, nivelering: form.nivelering, keterangan: form.keterangan }, file: positionFile }, 'dokumen_sk')
       appendRegistrationData(body, 'pendidikan_umum', histories.pendidikan_umum, 'dokumen_pendukung')
       if (histories.pendidikan_polri) appendRegistrationData(body, 'pendidikan_polri', histories.pendidikan_polri, 'dokumen_pendukung')
       for (const key of ['kualifikasi', 'riwayat_jabatan', 'penugasan_operasi', 'prestasi', 'penghargaan'] as const) histories[key].forEach((record, index) => appendRegistrationData(body, `${key}[${index}]`, record, key === 'kualifikasi' ? 'dokumen_pendukung' : key === 'riwayat_jabatan' ? 'dokumen_sk' : 'dokumen'))
     }
     try {
-      const response = await apiRequest<{ data: Personnel }>(isEdit ? `/personel/${id}` : '/personel', { method: isEdit ? 'PUT' : 'POST', body: isEdit ? JSON.stringify(payload) : body })
+      const response = await apiRequest<{ data: Personnel }>(isEdit ? `/personel/${id}` : '/personel', { method: isEdit ? 'PUT' : 'POST', body: isEdit ? JSON.stringify(common) : body })
       navigate(`/personel/${response.data.id}`)
     } catch (exception) {
       if (exception instanceof ApiError) { setError(exception.message); setErrors(exception.errors) } else setError('Tidak dapat menyimpan data.')
@@ -79,7 +78,7 @@ export function PersonnelFormPage() {
         <label><span>NRP / NIP</span><input value={form.nomor_identitas} onChange={(e) => setField('nomor_identitas', e.target.value)} inputMode="numeric" required />{fieldError('nomor_identitas') && <small>{fieldError('nomor_identitas')}</small>}</label>
         <label className="wide"><span>Nama lengkap</span><input value={form.nama_lengkap} onChange={(e) => setField('nama_lengkap', e.target.value)} required />{fieldError('nama_lengkap') && <small>{fieldError('nama_lengkap')}</small>}</label>
         <label><span>Pangkat</span><select value={form.pangkat_id} onChange={(e) => setField('pangkat_id', e.target.value)} required><option value="">Pilih pangkat</option>{ranks.map((rank) => <option key={rank.id} value={rank.id}>{rank.nama}</option>)}</select>{fieldError('pangkat_id') && <small>{fieldError('pangkat_id')}</small>}</label>
-        <label><span>Status</span><select value={form.status} onChange={(e) => setField('status', e.target.value)}><option value="aktif">Aktif</option><option value="pensiun">Pensiun</option><option value="nonaktif">Nonaktif</option></select>{fieldError('status') && <small>{fieldError('status')}</small>}</label>
+        <label><span>Status personel</span><select value={form.status} onChange={(e) => setField('status', e.target.value)}><option value="aktif">Aktif</option><option value="pensiun">Pensiun</option><option value="nonaktif">Nonaktif</option></select>{fieldError('status') && <small>{fieldError('status')}</small>}</label>
         <label><span>Tempat lahir</span><input value={form.tempat_lahir} onChange={(e) => setField('tempat_lahir', e.target.value)} required /></label>
         <label><span>Tanggal lahir</span><input type="date" value={form.tanggal_lahir} onChange={(e) => setField('tanggal_lahir', e.target.value)} required />{fieldError('tanggal_lahir') && <small>{fieldError('tanggal_lahir')}</small>}</label>
         <label className="wide"><span>Foto personel</span><input type="file" accept="image/*" disabled /><small>Belum tersedia pada versi ujian ini.</small></label>
@@ -89,8 +88,10 @@ export function PersonnelFormPage() {
         {!isEdit && form.status === 'aktif' && <>
           <label className="wide"><span>Nama jabatan</span><input value={form.nama_jabatan} onChange={(e) => setField('nama_jabatan', e.target.value)} placeholder="Contoh: Banit Sat Intelkam" required />{fieldError('jabatan_utama.nama_jabatan') && <small>{fieldError('jabatan_utama.nama_jabatan')}</small>}</label>
           <label><span>Bidang / fungsi</span><select value={form.bidang_fungsi_id} onChange={(e) => setField('bidang_fungsi_id', e.target.value)} required><option value="">Pilih fungsi</option>{references?.bidang_fungsi.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label>
-          <label><span>Jenis penugasan</span><select value={form.jenis_penugasan_id} onChange={(e) => setField('jenis_penugasan_id', e.target.value)} required><option value="">Pilih jenis</option>{references?.jenis_penugasan.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select></label>
+          <label><span>Status jabatan / jenis penugasan</span><select value={form.jenis_penugasan_id} onChange={(e) => setField('jenis_penugasan_id', e.target.value)} required><option value="">Pilih status jabatan</option>{references?.jenis_penugasan.map((item) => <option key={item.id} value={item.id}>{item.nama}</option>)}</select><small>Definitif, PS, PLT, atau PLH; berbeda dari status personel.</small>{fieldError('jabatan_utama.jenis_penugasan_id') && <small>{fieldError('jabatan_utama.jenis_penugasan_id')}</small>}</label>
           <label><span>Tanggal mulai</span><input type="date" value={form.tanggal_mulai} onChange={(e) => setField('tanggal_mulai', e.target.value)} required />{fieldError('jabatan_utama.tanggal_mulai') && <small>{fieldError('jabatan_utama.tanggal_mulai')}</small>}</label>
+          <label><span>Nivelering jabatan (opsional)</span><input maxLength={50} value={form.nivelering} onChange={(e) => setField('nivelering', e.target.value)} />{fieldError('jabatan_utama.nivelering') && <small>{fieldError('jabatan_utama.nivelering')}</small>}</label>
+          <label className="wide"><span>Keterangan jabatan (opsional)</span><textarea rows={3} maxLength={1000} value={form.keterangan} onChange={(e) => setField('keterangan', e.target.value)} />{fieldError('jabatan_utama.keterangan') && <small>{fieldError('jabatan_utama.keterangan')}</small>}</label>
           <label className="wide"><span>PDF SK jabatan utama (opsional, maksimal 5 MB)</span><input type="file" accept=".pdf,application/pdf" onChange={(event) => setPositionFile(event.target.files?.[0] ?? null)} />{fieldError('jabatan_utama.dokumen_sk') && <small>{fieldError('jabatan_utama.dokumen_sk')}</small>}</label>
         </>}
         {!isEdit && form.status !== 'aktif' && <p className="wide dashboard-note">Tidak membuat jabatan aktif. Jabatan terdahulu dapat diisi di bagian riwayat jabatan.</p>}

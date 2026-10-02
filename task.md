@@ -413,6 +413,12 @@ Verifikasi tambahan pangkat: 162 test / 865 assertion backend lulus pada SQLite 
 
 Checkpoint dataset demo: `DemoPersonnelSeeder` tidak masuk seed instalasi standar; 100 data bertanda DEMO diterapkan ke database lokal (95 tampil dan 5 arsip), tanpa reset, penambahan akun, atau perubahan scope. Pendidikan wajib dan variasi riwayat tersedia; merit belum diverifikasi dan tanpa PDF palsu. Delapan test tambahan mencakup komposisi data, menjalankan ulang setelah edit/arsip, benturan identitas, prasyarat, rollback konflik unit, production guard, instalasi standar tetap kecil, pagination/filter/scope API. Seluruh 170 test / 947 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; Pint lulus. Ini dataset demonstrasi, bukan hasil uji beban nasional.
 
+### Perapian field jabatan sesuai soal
+
+- [x] Label Status personel dibedakan dari Status jabatan / jenis penugasan pada registrasi, riwayat dan mutasi; profil memberi label Status jabatan pada setiap riwayat.
+- [x] Nivelering dan keterangan jabatan utama tersedia secara opsional saat registrasi; dikirim memakai field API yang sudah ada, dengan batas panjang dan pesan validasi backend.
+- [x] Verifikasi: 21 tes frontend, lint dan build lulus; 38 tes backend terkait registrasi/arsip/riwayat/detail dengan 205 assertion lulus pada SQLite. Tidak ada perubahan skema, data, maupun kontrak API.
+
 ### Perbaikan panduan clean install dan tes CORS
 
 - [x] Tes preflight mengatur origin sendiri, mencakup port 5173/5174 dan penolakan origin asing, tanpa bergantung pada `.env` developer.

@@ -166,6 +166,7 @@ Narasi singkat demo Point 5: buka profil personel dan tunjukkan tiga riwayat yan
 
 - Semua personel aktif mempunyai jabatan organisasi; istilah “tanpa jabatan” tidak digunakan sebagai nilai jabatan.
 - Hanya satu riwayat jabatan utama yang boleh aktif pada satu waktu. Penugasan tambahan dapat berjalan bersamaan.
+- Status jabatan ditampilkan sebagai jenis penugasan (Definitif/PS/PLT/PLH), berbeda dari status personel (aktif/nonaktif/pensiun). Periode jabatan terlihat dari tanggal mulai dan selesai; tanggal selesai kosong berarti belum dicatat berakhir. Nivelering dan keterangan jabatan utama dapat diisi secara opsional sejak registrasi awal.
 - Jabatan utama aktif tidak dapat langsung dihapus atau diakhiri melalui CRUD biasa. Gunakan proses pergantian jabatan atau mutasi agar riwayat konsisten.
 - Mutasi hanya diizinkan jika unit asal dan tujuan berada dalam scope pengguna.
 - Kualifikasi disajikan sebagai fakta. Jumlah kegiatan dan durasi pengalaman hanyalah alat urut/filter, bukan nilai merit otomatis.
