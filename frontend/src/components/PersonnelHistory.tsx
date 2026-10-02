@@ -63,9 +63,10 @@ export function QualificationSection({ personnelId, onChange }: { personnelId: n
 }
 
 export function PositionSection({ personnelId, onChange }: { personnelId: number; onChange: () => void }) {
-  const history = useHistory<PositionRecord>(personnelId, 'riwayat-jabatan')
+  const history = useHistory<PositionRecord>(personnelId, 'riwayat-jabatan', 'desc')
   return <section className="profile-section reveal" aria-label="Riwayat jabatan">
     <div className="section-heading"><div><span className="eyebrow">Perjalanan karier</span><h2>Riwayat jabatan</h2></div><div className="history-actions"><Link className="secondary-cta" to={`/personel/${personnelId}/riwayat-jabatan/tambah`}>+ Tambah riwayat</Link><Link className="secondary-cta" to={`/personel/${personnelId}/mutasi`}>Ganti jabatan / mutasi</Link></div></div>
+    <div className="history-actions"><button className="table-sort active" type="button" onClick={() => history.changeDirection(history.direction === 'desc' ? 'asc' : 'desc')} aria-label={`Urutkan tanggal mulai: ${history.direction === 'desc' ? 'terlama ke terbaru' : 'terbaru ke terlama'}`}>Tanggal mulai <span aria-hidden="true">{history.direction === 'asc' ? '↑' : '↓'}</span></button><span aria-live="polite">{history.direction === 'asc' ? 'Terlama → terbaru' : 'Terbaru → terlama'}</span></div>
     {history.error && <div className="alert error" role="alert">{history.error} <button className="text-action" onClick={history.reload}>Coba lagi</button></div>}
     {history.loading ? <div className="empty-inline" role="status">Memuat riwayat jabatan…</div> : !history.error && <div className="timeline">
       {history.items.map((item, index) => <article className="timeline-item" key={item.id}><div className="timeline-marker"><span>{(history.page - 1) * 15 + index + 1}</span></div><div className="timeline-content history-timeline-content">

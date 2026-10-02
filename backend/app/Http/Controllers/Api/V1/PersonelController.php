@@ -72,7 +72,7 @@ class PersonelController extends Controller
             ->when($filters['search'] ?? null, function (Builder $query, string $search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query
-                        ->where('nama_lengkap', 'like', "%{$search}%")
+                        ->whereLike('nama_lengkap', "%{$search}%")
                         ->orWhere('nomor_identitas', 'like', "%{$search}%");
                 });
             })

@@ -158,6 +158,7 @@ Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikas
 - [x] Menambahkan upload SK PDF opsional maksimal 5 MB.
 - [x] Membuat endpoint download SK berizin.
 - [x] Menampilkan riwayat secara kronologis.
+- [x] Tombol Tanggal mulai ↑/↓ pada riwayat jabatan, default terbaru; sorting server sebelum pagination, kembali ke halaman pertama dan cache terpisah per arah.
 - [x] Membuat test jabatan utama dan penugasan tambahan.
 
 ## J. Mutasi
@@ -188,6 +189,13 @@ Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikas
 - [x] Membuat test query filter dan sorting.
 
 ## K.1 Perluasan Profil Merit
+
+- [x] Prototype integrasi disiplin/kode etik read-only, Admin SSDM/System Admin saja, tanpa role Propam atau CRUD perkara.
+- [x] Snapshot keputusan final/dibatalkan, ID sumber unik dan timestamp, pagination serta label DEMO/belum tersinkron.
+- [x] QA browser Admin SSDM: tab prototype, label belum terhubung, kedua catatan final/dibatalkan tampil tanpa tombol perubahan.
+- [x] Seeder opsional disiplin untuk DEMO 001 saja, local/testing, tidak menimpa data lama/personel manual.
+- [x] Tes prototype: autentikasi, role/gate, operator ditolak, tidak bocor di profil biasa, GET-only, pagination, sumber demo saja, empty/arsip/404, seed idempotent dan guard production. Seluruh 193 test / 1081 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 20 test frontend, lint/build dan Pint lulus. Migrasi tambahan/seed demo diterapkan lokal tanpa reset.
+- [ ] Integrasi nyata ke API Propam, validasi/pencocokan identitas, audit dan delta sync (pengembangan lanjutan, bukan koneksi aktif prototype).
 
 - [x] Menetapkan konsep riwayat penugasan operasi sebagai data faktual terpisah.
 - [x] Menetapkan konsep prestasi personel sebagai data faktual terpisah.
@@ -379,6 +387,21 @@ Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikas
 Checkpoint revisi 2 Oktober 2026: pendaftaran beserta pendidikan wajib dan riwayat opsional, pemilih Satker satu kolom, linkage akun personel, arsip/pemulihan admin, serta label pangkat selesai. Seluruh 153 test / 824 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 17 test frontend, lint, build, Pint, parsing OpenAPI/Postman lulus. Browser memverifikasi formulir registrasi, pendidikan Polri opsional untuk PNS, pencarian personel pada akun, dan daftar arsip. Foto masih placeholder; riwayat pelanggaran masih rancangan terbatas, bukan modul input. Data pengguna lama tidak diisi dengan pendidikan atau hubungan akun rekaan. Setup/clone bersih, pengujian Postman menyeluruh, publikasi repository, dan video tetap tahap finishing.
 
 Checklist final submission berikut tetap belum selesai hanya karena revisi di atas selesai.
+
+### Kesiapan prototype integrasi personel (2 Oktober 2026)
+
+- [x] Pencarian nama tidak case-sensitive, termasuk personel yang dipulihkan dari arsip; teks tersimpan tidak diubah.
+- [x] Card dashboard memperjelas total catatan kualifikasi, bukan jumlah personel; login memakai bahasa formal Sistem Merit Personel Polri.
+- [x] Kontrak adapter sumber canonical + simulasi versi 1/2, tanpa koneksi/kredensial SIPP.
+- [x] Pratinjau staging tanpa perubahan personel, konfirmasi eksplisit, batch maksimal 25, laporan tersimpan berhalaman dan resume.
+- [x] ID sumber unik/NRP unik, konflik pemetaan/manual edit/arsip/mutasi, anti-duplikasi dan pengaman fingerprint.
+- [x] Pendidikan wajib/jabatan awal mengikuti validasi dan transaksi domain; perubahan identitas dasar tidak menimpa riwayat lokal.
+- [x] Initial import dan delta checkpoint; tombstone tidak menghapus personel, checkpoint tidak maju saat konflik/gagal, baseline stale ditolak.
+- [x] Pembatasan Admin SSDM/System Admin, penolakan Operator, simulasi write hanya local/testing, laporan tidak membocorkan payload penuh.
+- [x] Uji sumber/laporan berhalaman, rollback per item, retry dan perubahan pemetaan referensi sesudah pratinjau; 13 test integrasi / 133 assertion lulus. Full 206 test / 1214 assertion lulus pada SQLite dan PostgreSQL terisolasi; 20 test frontend, lint/build/Pint dan parsing OpenAPI/Postman lulus.
+- [x] Browser: pratinjau → konfirmasi → impor tiga data sintetis → delta tambah/update/tombstone, checkpoint 1→2; empat personel IMPORT DEMO lokal, data manual dipertahankan.
+- [x] README, rencana, arsitektur, OpenAPI dan Postman diperbarui dengan batas prototype/pengembangan produksi.
+- [ ] Adapter REST sumber resmi, pemetaan/governance resmi, cursor delta resmi, queue streaming/backoff, audit dan monitoring produksi (pengembangan lanjutan, bukan requirement koneksi ujian).
 
 Checkpoint sorting header: enam header klik dengan panah aktif dan `aria-sort`, keyboard focus, teks A–Z/Z–A, serta arah awal numerik menurun selesai. Backend menerima `jabatan` dan `satker`, mengambil satu nilai terindeks tanpa menggandakan baris, mengabaikan jabatan lama/tambahan/soft-deleted, dan memakai ID sebagai tie-breaker. Browser memverifikasi toggle Satker serta sorting dari halaman 2 kembali ke 1 sambil mempertahankan filter Aktif dan sinkronisasi dropdown. Seluruh 176 test / 971 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 20 test frontend, lint/build, dan Pint lulus. README, rencana, dan kontrak OpenAPI diperbarui.
 

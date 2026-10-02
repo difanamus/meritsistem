@@ -21,6 +21,30 @@ class RiwayatJabatanApiTest extends TestCase
 {
     use LazilyRefreshDatabase;
 
+    public function test_position_sort_defaults_to_newest_and_can_reverse_before_pagination(): void
+    {
+        [$operator, $personel, $unit] = $this->operatorAndPersonnel();
+        Sanctum::actingAs($operator);
+        for ($year = 2000; $year <= 2015; $year++) {
+            RiwayatJabatan::factory()->for($personel)->for($unit)->create([
+                'tanggal_mulai' => "{$year}-01-01", 'is_jabatan_utama' => false,
+            ]);
+        }
+        $tie = RiwayatJabatan::factory()->for($personel)->for($unit)->create([
+            'tanggal_mulai' => '2000-01-01', 'is_jabatan_utama' => false,
+        ]);
+        $deleted = RiwayatJabatan::factory()->for($personel)->create(['tanggal_mulai' => '1990-01-01', 'is_jabatan_utama' => false]);
+        $deleted->delete();
+        RiwayatJabatan::factory()->create(['tanggal_mulai' => '1980-01-01']);
+        $path = "/api/v1/personel/{$personel->id}/riwayat-jabatan";
+
+        $this->getJson($path)->assertOk()->assertJsonPath('data.0.tanggal_mulai', '2015-01-01')->assertJsonPath('meta.total', 17);
+        $this->getJson($path.'?direction=asc')->assertOk()->assertJsonPath('data.0.tanggal_mulai', '2000-01-01')->assertJsonPath('data.1.id', $tie->id)->assertJsonCount(15, 'data');
+        $this->getJson($path.'?direction=asc&page=2')->assertOk()->assertJsonPath('data.0.tanggal_mulai', '2014-01-01')->assertJsonPath('data.1.tanggal_mulai', '2015-01-01');
+        $this->getJson($path.'?direction=desc')->assertOk()->assertJsonPath('data.0.tanggal_mulai', '2015-01-01');
+        $this->getJson($path.'?direction=desc%3BDROP')->assertUnprocessable()->assertJsonValidationErrors('direction');
+    }
+
     public function test_additional_assignment_can_overlap_primary_position_and_store_private_pdf(): void
     {
         Storage::fake('local');

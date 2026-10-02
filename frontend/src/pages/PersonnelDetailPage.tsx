@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon'
 import { PositionSection, QualificationSection } from '../components/PersonnelHistory'
 import { useAuth } from '../auth/useAuth'
 import { MeritSection } from '../components/MeritSection'
+import { DisciplinePrototypeSection } from '../components/DisciplinePrototypeSection'
 import { ApiError, apiRequest, peekApiCache } from '../lib/api'
 import type { Personnel, Position } from '../types'
 
@@ -18,6 +19,7 @@ const profileTabs = [
   { id: 'operasi', label: 'Penugasan operasi' },
   { id: 'prestasi', label: 'Prestasi' },
   { id: 'penghargaan', label: 'Penghargaan' },
+  { id: 'disiplin', label: 'Disiplin & Kode Etik · Prototype' },
 ] as const
 
 type ProfileTab = (typeof profileTabs)[number]['id']
@@ -31,6 +33,7 @@ export function PersonnelDetailPage() {
 function PersonnelDetailContent({ id }: { id: string | undefined }) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const visibleTabs = profileTabs.filter((tab) => tab.id !== 'disiplin' || user?.role === 'system_admin' || user?.role === 'admin_ssdm')
   const [archiveReason, setArchiveReason] = useState('')
   const [confirmArchive, setConfirmArchive] = useState(false)
   const [archiving, setArchiving] = useState(false)
@@ -49,13 +52,13 @@ function PersonnelDetailContent({ id }: { id: string | undefined }) {
   }
 
   const handleTabKey = (event: KeyboardEvent<HTMLButtonElement>, tab: ProfileTab) => {
-    const current = profileTabs.findIndex((item) => item.id === tab)
-    const next = event.key === 'ArrowRight' ? (current + 1) % profileTabs.length
-      : event.key === 'ArrowLeft' ? (current - 1 + profileTabs.length) % profileTabs.length
-        : event.key === 'Home' ? 0 : event.key === 'End' ? profileTabs.length - 1 : null
+    const current = visibleTabs.findIndex((item) => item.id === tab)
+    const next = event.key === 'ArrowRight' ? (current + 1) % visibleTabs.length
+      : event.key === 'ArrowLeft' ? (current - 1 + visibleTabs.length) % visibleTabs.length
+        : event.key === 'Home' ? 0 : event.key === 'End' ? visibleTabs.length - 1 : null
     if (next === null) return
     event.preventDefault()
-    selectTab(profileTabs[next].id)
+    selectTab(visibleTabs[next].id)
     event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus()
   }
 
@@ -104,14 +107,15 @@ function PersonnelDetailContent({ id }: { id: string | undefined }) {
         </div>
       </section>
       <div className="profile-tabs" role="tablist" aria-label="Riwayat personel">
-        {profileTabs.map((tab) => <button key={tab.id} id={`profile-tab-${tab.id}`} type="button" role="tab" tabIndex={activeTab === tab.id ? 0 : -1} aria-controls={`profile-panel-${tab.id}`} aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'active' : ''} onClick={() => selectTab(tab.id)} onKeyDown={(event) => handleTabKey(event, tab.id)}>{tab.label}</button>)}
+        {visibleTabs.map((tab) => <button key={tab.id} id={`profile-tab-${tab.id}`} type="button" role="tab" tabIndex={activeTab === tab.id ? 0 : -1} aria-controls={`profile-panel-${tab.id}`} aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'active' : ''} onClick={() => selectTab(tab.id)} onKeyDown={(event) => handleTabKey(event, tab.id)}>{tab.label}</button>)}
       </div>
-      {profileTabs.map((item) => <div key={`${person.id}-${item.id}`} id={`profile-panel-${item.id}`} role="tabpanel" aria-labelledby={`profile-tab-${item.id}`} hidden={activeTab !== item.id}>
+      {visibleTabs.map((item) => <div key={`${person.id}-${item.id}`} id={`profile-panel-${item.id}`} role="tabpanel" aria-labelledby={`profile-tab-${item.id}`} hidden={activeTab !== item.id}>
         {visitedTabs.includes(item.id) && item.id === 'kualifikasi' && <QualificationSection personnelId={person.id} onChange={() => setRevision((value) => value + 1)} />}
         {visitedTabs.includes(item.id) && item.id === 'jabatan' && <PositionSection personnelId={person.id} onChange={() => setRevision((value) => value + 1)} />}
         {visitedTabs.includes(item.id) && item.id === 'operasi' && <MeritSection personnelId={person.id} kind="penugasan-operasi" />}
         {visitedTabs.includes(item.id) && item.id === 'prestasi' && <MeritSection personnelId={person.id} kind="prestasi" />}
         {visitedTabs.includes(item.id) && item.id === 'penghargaan' && <MeritSection personnelId={person.id} kind="penghargaan" />}
+        {visitedTabs.includes(item.id) && item.id === 'disiplin' && <DisciplinePrototypeSection personnelId={person.id} />}
       </div>)}
       {user?.role !== 'operator' && <section className="profile-section">
         <div className="content-shell"><div className="content-core dashboard-panel"><h2>Arsipkan data personel</h2><p className="dashboard-note">Untuk duplikat atau koreksi pencatatan, bukan pensiun atau mutasi. Riwayat, dokumen, dan tanggal karier tetap utuh. Akun terkait dinonaktifkan; Admin dapat memulihkan melalui daftar Arsip.</p>

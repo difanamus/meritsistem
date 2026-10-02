@@ -32,6 +32,9 @@ export function AppShell() {
               <span>Data Personel</span>
             </NavLink>
             {canManageUsers && <span className="nav-group-label">Administrasi</span>}
+            {canManageUsers && <NavLink to="/integrasi-personel" aria-label="Integrasi Personel">
+              <span className="nav-icon"><Icon name="server" /></span><span>Integrasi Personel</span>
+            </NavLink>}
             {canManageUsers && <NavLink to="/pengguna" aria-label="Pengguna dan Scope" className={() => location.pathname.startsWith('/pengguna') ? 'active' : ''}>
               <span className="nav-icon"><Icon name="shield" /></span>
               <span>Pengguna & Scope</span>

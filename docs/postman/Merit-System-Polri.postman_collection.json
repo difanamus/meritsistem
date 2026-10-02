@@ -11,6 +11,22 @@
   },
   "item": [
     {
+      "name": "Prototype Integrasi Personel (simulasi, bukan SIPP)",
+      "item": [
+        { "name": "Metadata dan laporan terakhir", "request": { "method": "GET", "url": "{{base_url}}/personnel-integration" } },
+        { "name": "Pratinjau impor awal versi 1", "request": { "method": "POST", "url": "{{base_url}}/personnel-integration/preview", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"mode\":\"initial\",\"version\":1}"} }, "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Pratinjau berhasil', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.environment.set('import_run_id', pm.response.json().data.run.id);"]}}] },
+        { "name": "Laporan pratinjau (periksa sebelum apply)", "request": { "method": "GET", "url": "{{base_url}}/personnel-integration/{{import_run_id}}?page=1" } },
+        { "name": "Konfirmasi dan proses batch", "request": { "method": "POST", "url": "{{base_url}}/personnel-integration/{{import_run_id}}/apply", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"confirmed\":true,\"batch_size\":25}"}, "description":"Hanya setelah memeriksa pratinjau. Run selesai aman diulang. Maksimum 25 item, tanpa delete/restore sumber." } },
+        { "name": "Pratinjau delta versi 2", "request": { "method": "POST", "url": "{{base_url}}/personnel-integration/preview", "header": [{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\"mode\":\"delta\",\"version\":2}"} }, "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Pratinjau delta berhasil', () => pm.response.to.have.status(201));", "if (pm.response.code === 201) pm.environment.set('import_run_id', pm.response.json().data.run.id);"]}}] }
+      ]
+    },
+    {
+      "name": "Prototype Disiplin & Kode Etik (read-only)",
+      "item": [
+        { "name": "Riwayat DEMO khusus Admin SSDM/System Admin", "request": { "method": "GET", "url": "{{base_url}}/personel/{{personel_id}}/disiplin-prototype?page=1", "description": "Belum terhubung ke Propam; data sintetis saja. Pilih ID personel DEMO 001 untuk contoh final/dibatalkan. Operator mendapat 403. Tidak ada endpoint input atau sync." } }
+      ]
+    },
+    {
       "name": "Dashboard & Monitoring",
       "item": [
         { "name": "Dashboard sesuai role dan scope", "request": { "method": "GET", "url": "{{base_url}}/dashboard" } },

@@ -18,6 +18,7 @@ erDiagram
     PERSONEL ||--o{ PENUGASAN_OPERASI : menjalani
     PERSONEL ||--o{ PRESTASI_PERSONEL : mencapai
     PERSONEL ||--o{ PENGHARGAAN_PERSONEL : menerima
+    PERSONEL ||--o{ DISCIPLINE_SNAPSHOTS : prototype_read_only
     JENIS_KUALIFIKASI ||--o{ KUALIFIKASI_PERSONEL : mengelompokkan
     BIDANG_FUNGSI o|--o{ KUALIFIKASI_PERSONEL : relevan_untuk
     BIDANG_FUNGSI ||--o{ RIWAYAT_JABATAN : bidang
@@ -270,4 +271,14 @@ Jumlah kegiatan dan durasi pengalaman adalah ringkasan faktual, bukan skor otoma
 
 ## Rancangan rekam disiplin (belum diimplementasikan)
 
-Rekam pelanggaran hanya boleh berisi putusan/sanksi final, bukan dugaan atau laporan mentah. Rencana data: jenis disiplin/etik, nomor dan tanggal putusan, instansi penetap, uraian faktual terbatas, sanksi, masa berlaku, dokumen privat, status berlaku/dibatalkan, serta versi perubahan keputusan. Pembatalan tidak menghapus rekam sebelumnya. Akses baca/tulis/unduh dibatasi petugas berwenang dan dicatat pada audit akses; tidak diberikan otomatis kepada semua Operator. Tidak ada pengurangan skor otomatis. Modul ini ditunda sampai governance dan audit khusus siap; belum ada endpoint/form disiplin pada prototype.
+Prototype read-only terpisah kini tersedia pada tab disiplin; rancangan di bawah menjelaskan governance modul produksi, bukan koneksi Propam aktif.
+
+Rekam pelanggaran hanya boleh berisi putusan/sanksi final, bukan dugaan atau laporan mentah. Rencana data: jenis disiplin/etik, nomor dan tanggal putusan, instansi penetap, uraian faktual terbatas, sanksi, masa berlaku, dokumen privat, status berlaku/dibatalkan, serta versi perubahan keputusan. Pembatalan tidak menghapus rekam sebelumnya. Akses baca/tulis/unduh dibatasi petugas berwenang dan dicatat pada audit akses; tidak diberikan otomatis kepada semua Operator. Tidak ada pengurangan skor otomatis. Modul pengelolaan perkara produksi ditunda sampai governance dan audit khusus siap; prototype hanya menyediakan endpoint baca data sintetis, tanpa form input atau koneksi Propam.
+
+## Prototype sinkronisasi personel
+
+`PersonnelSource` → validasi canonical + pemetaan kode → `personnel_import_runs/items` (pratinjau) → konfirmasi → batch 25 dalam transaksi → `PersonnelRegistrationService` atau pembaruan identitas dasar → `personnel_source_links` → laporan dan `personnel_sync_checkpoints`. Keempat tabel bookkeeping terpisah dari riwayat domain. Indeks unik sumber/ID dan sumber/personel mencegah pemetaan ganda; indeks run/status/id membatasi query batch.
+
+Checkpoint dan run dikunci saat apply; setiap item memiliki savepoint untuk rollback personel/riwayat/pemetaan secara atomik bila gagal. Fingerprint pratinjau dan hash lokal mencegah overwrite data yang berubah. Laporan hanya menampilkan identitas/item/status/alasan, bukan payload penuh. Run yang selesai dapat dibaca/diapply ulang tanpa efek tambahan. Checkpoint tidak maju bila ada konflik/gagal. Source tombstone dilewati, NRP tanpa link perlu pemeriksaan manual, arsip tidak dipulihkan.
+
+Adapter simulasi menyediakan versi 1/2, halaman 25, maksimum manifest 100 dan empat halaman. Sumber nyata memerlukan adapter resmi dan staging/queue streaming, bukan menaikkan batas simulasi lalu mengklaim skala nasional. Delta saat ini memakai nomor versi simulasi, bukan cursor SIPP. Tidak ada request eksternal/kredensial atau scheduler. Lihat README dan OpenAPI untuk demo/kontrak.

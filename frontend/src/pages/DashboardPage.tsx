@@ -39,7 +39,7 @@ export function DashboardPage() {
       {operator && data.scope.unit_count === 0 && <div className="alert">Belum ada scope aktif. Hubungi Admin SSDM atau System Admin untuk penetapan cakupan unit.</div>}
       <section className="metric-row" aria-label="Ringkasan cakupan akses">
         <div className="metric-shell accent"><div className="metric-core"><span>Personel dalam cakupan</span><strong>{data.personnel.total}</strong><small>{data.scope.unit_count} unit organisasi · {data.scope.global ? 'akses nasional' : 'scope aktif'}</small></div></div>
-        <div className="metric-shell"><div className="metric-core"><span>Riwayat kualifikasi</span><strong>{data.qualifications}</strong><small>catatan faktual, tanpa skor otomatis</small></div></div>
+        <div className="metric-shell"><div className="metric-core"><span>Total catatan kualifikasi</span><strong>{data.qualifications}</strong><small>jumlah catatan kualifikasi, bukan jumlah personel</small></div></div>
         <div className="metric-shell"><div className="metric-core"><span>Penugasan jabatan aktif</span><strong>{data.active_positions}</strong><small>jabatan utama dan penugasan tambahan</small></div></div>
       </section>
       <div className="dashboard-grid">

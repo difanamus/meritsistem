@@ -16,6 +16,7 @@ import { UserListPage } from './pages/UserListPage'
 import { ReferencePage } from './pages/ReferencePage'
 import { DashboardPage } from './pages/DashboardPage'
 import { SystemStatusPage } from './pages/SystemStatusPage'
+import { PersonnelIntegrationPage } from './pages/PersonnelIntegrationPage'
 import './App.css'
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
               <Route path="/personel/:id/mutasi" element={<MutationFormPage />} />
               <Route path="/personel/:id" element={<PersonnelDetailPage />} />
               <Route element={<RoleProtectedRoute roles={['system_admin', 'admin_ssdm']} />}>
+                <Route path="/integrasi-personel" element={<PersonnelIntegrationPage />} />
                 <Route path="/pengguna" element={<UserListPage />} />
                 <Route path="/pengguna/tambah" element={<UserFormPage />} />
                 <Route path="/pengguna/:id/edit" element={<UserFormPage />} />

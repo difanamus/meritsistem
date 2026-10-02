@@ -17,6 +17,138 @@ tags:
   - name: Administrasi Referensi
   - name: Profil Merit
 paths:
+  /personnel-integration:
+    get:
+      tags: [Personel]
+      summary: Metadata sumber simulasi dan sepuluh laporan terakhir
+      description: Khusus Admin SSDM/System Admin. Prototype true, connected false; tidak terhubung ke SIPP. Checkpoint berupa versi simulasi.
+      responses:
+        '200': { description: 'Metadata, checkpoint, enabled dan runs' }
+        '401': { description: Belum login }
+        '403': { description: Bukan admin }
+  /personnel-integration/preview:
+    post:
+      tags: [Personel]
+      summary: Buat pratinjau impor personel simulasi
+      description: Tidak mengubah personel. Maksimal 100 record / empat halaman sumber. Kode referensi, pendidikan wajib dan jabatan awal divalidasi; NRP tanpa pemetaan/arsip menjadi konflik. Hanya local/testing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode, version]
+              properties:
+                mode: { type: string, enum: [initial, delta] }
+                version: { type: integer, enum: [1, 2] }
+      responses:
+        '201':
+          description: Laporan pratinjau tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PersonnelIntegrationReport' }
+        '401': { description: Belum login }
+        '403': { description: Bukan admin }
+        '422': { description: Input/manifest tidak valid atau versi mundur }
+        '503': { description: Simulasi write dinonaktifkan di luar local/testing }
+  /personnel-integration/{run}:
+    parameters:
+      - { in: path, name: run, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      tags: [Personel]
+      summary: Baca laporan impor tersimpan, maksimal 25 item per halaman
+      parameters:
+        - { in: query, name: page, schema: { type: integer, minimum: 1, maximum: 10000, default: 1 } }
+      responses:
+        '200':
+          description: Laporan tanpa payload sumber penuh
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PersonnelIntegrationReport' }
+        '401': { description: Belum login }
+        '403': { description: Bukan admin }
+        '404': { description: Run tidak ditemukan }
+        '422': { description: Pagination tidak valid }
+  /personnel-integration/{run}/apply:
+    parameters:
+      - { in: path, name: run, required: true, schema: { type: integer, minimum: 1 } }
+    post:
+      tags: [Personel]
+      summary: Konfirmasi dan proses batch tersimpan
+      description: Maksimal 25 item; savepoint per item. Run selesai idempotent. Checkpoint hanya maju tanpa konflik/gagal. Riwayat lokal/arsip dipertahankan; tombstone dilewati. Identitas dasar saja dapat diperbarui; penempatan/jabatan/status/pendidikan memerlukan proses manual. Hanya local/testing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmed]
+              properties:
+                confirmed: { type: boolean, const: true }
+                batch_size: { type: integer, minimum: 1, maximum: 25, default: 25 }
+      responses:
+        '200':
+          description: Laporan sesudah batch, baca status sebelum melanjutkan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PersonnelIntegrationReport' }
+        '401': { description: Belum login }
+        '403': { description: Bukan admin }
+        '404': { description: Run tidak ditemukan }
+        '409': { description: Baseline checkpoint berubah; buat pratinjau baru }
+        '422': { description: Konfirmasi atau ukuran batch tidak valid }
+        '503': { description: Simulasi write dinonaktifkan di luar local/testing }
+  /personel/{personel}/disiplin-prototype:
+    parameters:
+      - $ref: '#/components/parameters/PersonelId'
+    get:
+      tags: [Profil Merit]
+      summary: Riwayat disiplin dan kode etik DEMO, hanya baca
+      description: Khusus System Admin dan Admin SSDM. Data sintetis prototype, bukan keputusan nyata; belum terhubung ke Propam atau delta sync. Maksimum 15 per halaman, tanggal keputusan terbaru dahulu. Catatan dibatalkan tetap tampil dengan statusnya. Tidak tersedia POST/PUT/DELETE.
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+      responses:
+        '200':
+          description: Data demo berhalaman; kosong bukan bukti tidak pernah melanggar
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  integration:
+                    type: object
+                    properties:
+                      status: { const: prototype }
+                      connected: { const: false }
+                      source: { const: prototype_demo }
+                      last_synced_at: { type: 'null' }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        source_system: { const: prototype_demo }
+                        source_record_id: { type: string }
+                        jenis: { type: string, enum: [disiplin, kode_etik] }
+                        ringkasan: { type: string }
+                        nomor_keputusan: { type: string }
+                        tanggal_keputusan: { type: string, format: date }
+                        sanksi: { type: string }
+                        instansi_penerbit: { type: string }
+                        status_keputusan: { type: string, enum: [final, dibatalkan] }
+                        keterangan_pembatalan: { type: [string, 'null'] }
+                        source_updated_at: { type: [string, 'null'], format: date-time }
+                        synced_at: { type: [string, 'null'], format: date-time }
+                  meta: { type: object }
+                  links: { type: object }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /dashboard:
     get:
       tags: [Personel]
@@ -569,6 +701,11 @@ paths:
     get:
       tags: [Riwayat Jabatan]
       summary: Daftar riwayat jabatan secara kronologis
+      description: Urut tanggal mulai sebelum pagination; default terbaru dahulu, nilai sama memakai ID dengan arah yang sama.
+      parameters:
+        - in: query
+          name: direction
+          schema: { type: string, enum: [asc, desc], default: desc }
       responses:
         '200':
           description: Daftar riwayat jabatan
@@ -579,6 +716,7 @@ paths:
                 properties:
                   data: { type: array, items: { $ref: '#/components/schemas/RiwayatJabatan' } }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
     post:
       tags: [Riwayat Jabatan]
       summary: Tambah riwayat jabatan atau penugasan tambahan
@@ -1239,6 +1377,49 @@ components:
       properties:
         success: { type: boolean, const: false }
         message: { type: string }
+    PersonnelIntegrationReport:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [run, counts, checkpoint, items, meta]
+          properties:
+            run:
+              type: object
+              properties:
+                id: { type: integer }
+                source: { type: string, const: prototype_simulation }
+                mode: { type: string, enum: [initial, delta] }
+                version: { type: integer, enum: [1, 2] }
+                baseline_checkpoint: { type: integer }
+                status: { type: string, enum: [preview, running, completed, completed_with_errors] }
+                actor_id: { type: integer }
+                created_at: { type: string }
+                updated_at: { type: string }
+            counts:
+              type: object
+              additionalProperties: { type: integer }
+            checkpoint: { type: integer }
+            items:
+              type: array
+              maxItems: 25
+              items:
+                type: object
+                properties:
+                  id: { type: integer }
+                  source_id: { type: string }
+                  nama_lengkap: { type: string }
+                  nomor_identitas: { type: string }
+                  action: { type: string, enum: [create, update, unchanged, conflict, invalid, ignored] }
+                  status: { type: string, enum: [pending, succeeded, skipped, conflict, failed] }
+                  reason: { type: [string, 'null'] }
+            meta:
+              type: object
+              properties:
+                current_page: { type: integer }
+                last_page: { type: integer }
+                total: { type: integer }
     ValidationError:
       allOf:
         - $ref: '#/components/schemas/Error'

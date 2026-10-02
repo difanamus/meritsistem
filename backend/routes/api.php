@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\DisciplineSnapshotController;
 use App\Http\Controllers\Api\V1\KualifikasiPersonelController;
 use App\Http\Controllers\Api\V1\MeritRecordController;
 use App\Http\Controllers\Api\V1\MutasiController;
 use App\Http\Controllers\Api\V1\PersonelController;
+use App\Http\Controllers\Api\V1\PersonnelIntegrationController;
 use App\Http\Controllers\Api\V1\ReferenceController;
 use App\Http\Controllers\Api\V1\ReferenceOptionController;
 use App\Http\Controllers\Api\V1\RiwayatJabatanController;
@@ -20,6 +22,10 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::get('/dashboard', DashboardController::class);
         Route::get('/system-status', SystemStatusController::class);
+        Route::get('/personnel-integration', [PersonnelIntegrationController::class, 'index']);
+        Route::post('/personnel-integration/preview', [PersonnelIntegrationController::class, 'preview']);
+        Route::get('/personnel-integration/{run}', [PersonnelIntegrationController::class, 'show'])->whereNumber('run');
+        Route::post('/personnel-integration/{run}/apply', [PersonnelIntegrationController::class, 'apply'])->whereNumber('run');
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/personel-options', [PersonelController::class, 'options']);
         Route::post('/personel/{id}/restore', [PersonelController::class, 'restore'])->whereNumber('id');
@@ -36,6 +42,7 @@ Route::prefix('v1')->group(function (): void {
                 Route::delete('/{reference}', [ReferenceController::class, 'destroy'])->whereNumber('reference');
             });
         Route::get('/personel/{personel}/kualifikasi', [KualifikasiPersonelController::class, 'index']);
+        Route::get('/personel/{personel}/disiplin-prototype', DisciplineSnapshotController::class);
         Route::post('/personel/{personel}/kualifikasi', [KualifikasiPersonelController::class, 'store']);
         Route::put('/kualifikasi/{kualifikasi}', [KualifikasiPersonelController::class, 'update']);
         Route::get('/kualifikasi/{kualifikasi}', [KualifikasiPersonelController::class, 'show']);

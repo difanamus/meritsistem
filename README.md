@@ -11,6 +11,7 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 - CRUD pengguna berbasis permission, assignment beberapa scope unit, aktivasi/nonaktif akun, dan pencabutan seluruh token saat akun dinonaktifkan.
 - Scope organisasi `OWN_UNIT` dan `UNIT_AND_DESCENDANTS` pada hierarki Mabes–Polda–Polres–Satker–Polsek.
 - CRUD personel, kualifikasi, serta riwayat jabatan dengan validasi dan soft delete.
+- Riwayat jabatan dapat diurutkan lewat tombol Tanggal mulai ↑/↓ di atas timeline; default terbaru dahulu. Pergantian arah mengurutkan seluruh riwayat di server dan kembali ke halaman pertama.
 - CRUD unit organisasi, bidang/fungsi, jenis kualifikasi, dan jenis penugasan oleh System Admin/Admin SSDM; daftar pangkat baku (22 POLRI termasuk enam Tamtama, 17 PNS) hanya dipelihara System Admin. Admin SSDM dan Operator dapat membaca/memilih pangkat, dengan daftar unit dibatasi scope Operator.
 - Satu jabatan utama aktif, dengan penugasan tambahan PS, PLT, atau PLH.
 - Pergantian jabatan dan mutasi atomik: menutup jabatan lama, memperbarui Satker bila perlu, lalu membuat jabatan baru dalam satu transaksi database.
@@ -180,6 +181,28 @@ Gunakan endpoint `POST /api/v1/auth/login`, simpan nilai `token`, lalu kirim hea
 
 ## Batasan prototype
 
+### Prototype integrasi data personel
+
+Menu **Integrasi Personel** tersedia bagi Admin SSDM/System Admin. Ini sumber simulasi lokal, **bukan koneksi SIPP**. Pratinjau hanya menyimpan staging; konfirmasi memproses maksimum 25 item per request dan laporan tersimpan dapat dibuka kembali. Tidak perlu seed ulang atau reset data.
+
+Demo: pilih Impor awal / versi 1 → Buat pratinjau → periksa tiga personel `(IMPORT DEMO)` → centang konfirmasi → proses batch. Setelah selesai pilih Delta / versi 2: satu identitas diperbarui, satu personel baru ditambahkan, satu tombstone dilewati. Delta berikutnya di versi yang sama kosong. Tombstone tidak menghapus personel lokal. Mengulang laporan atau impor yang sama tidak menggandakan data.
+
+Pemetaan memakai `(source, source_record_id)` dan NRP/NIP unik; NRP yang sudah ada tanpa pemetaan menjadi konflik, bukan ditimpa/diadopsi otomatis. Arsip tidak dipulihkan, perubahan lokal dilindungi, pendidikan/jabatan/riwayat lokal tidak disinkron ulang secara destruktif. Perubahan penempatan/status/jabatan/pendidikan sumber memerlukan pemeriksaan dan proses domain. Pembaruan otomatis hanya nama, tempat/tanggal lahir, dan pangkat yang tervalidasi. Checkpoint maju hanya jika semua item selesai tanpa konflik/gagal; item berhasil tetap tersimpan saat retry.
+
+Kontrak adapter `App\Services\PersonnelSource::fetch(version, afterVersion, page, limit)` mengembalikan `{records, next_page}`. Record canonical: `{source_id, revision, deleted, personnel}`; `personnel` memuat jenis, NRP/NIP, nama, kode pangkat/unit, tempat/tanggal lahir, status, jabatan awal (kode fungsi/jenis penugasan), pendidikan umum dan Polri. Kode referensi harus aktif dan dikenali. Field registrasi wajib dan aturan domain sama dengan input manual. Manifest simulasi dibatasi 100 record / empat halaman, laporan 25 item per halaman; ini demonstrasi alur, bukan uji kapasitas nasional.
+
+Adapter nyata dapat menggantikan simulasi tanpa menulis ulang pendaftaran, staging, laporan, dan proteksi duplikasi. Tetap diperlukan kontrak sumber resmi, pemetaan kode/otoritas field, kredensial server-side, cursor delta resmi, queue/job streaming skala besar, retry/backoff, monitoring dan audit lengkap sebelum produksi. Endpoint simulasi write dinonaktifkan di luar local/testing. Jangan menganggap integrasi nyata tinggal mengisi URL.
+
+REST: `GET /personnel-integration`, `POST /personnel-integration/preview` (`mode: initial|delta`, `version: 1|2`), `GET /personnel-integration/{run}?page=1`, `POST /personnel-integration/{run}/apply` (`confirmed: true`, `batch_size: 1..25`). Seluruhnya di bawah `/api/v1`, wajib token dan role admin. Checkpoint berubah setelah pratinjau menghasilkan 409; buat pratinjau baru.
+
+### Prototype integrasi disiplin dan kode etik
+
+Tab read-only profil khusus Admin SSDM/System Admin menampilkan label **DEMO — belum terhubung ke sistem Propam**. Operator tidak melihat tab dan API menolak aksesnya. Tidak ada role Propam, form input/edit/hapus, skor negatif, file keputusan palsu, atau koneksi eksternal. Catatan berstatus `dibatalkan` tetap terlihat tetapi bukan sanksi aktif. Data kosong berarti belum ada catatan dalam sistem, bukan bukti tidak pernah melanggar.
+
+Contoh opsional: setelah `DemoPersonnelSeeder`, jalankan `php artisan db:seed --class=DisciplinePrototypeSeeder` dari backend. Hanya local/testing, hanya personel **Aditya Pratama (DEMO 001)** / `99990001`; tidak menempelkan pelanggaran ke personel manual. Dua keputusan sintetis (final dan dibatalkan) dibuat idempotent tanpa menimpa catatan lama. Instalasi standar tidak memuat contoh pelanggaran.
+
+Endpoint baca: `GET /api/v1/personel/{personel}/disiplin-prototype?page=1`, maksimal 15 per halaman. Tabel snapshot memisahkan `source_system`, `source_record_id`, waktu pembaruan sumber dan waktu sinkronisasi; ID sumber unik per sistem. Saat ini hanya sumber `prototype_demo` yang ditampilkan dan waktu sinkronisasi kosong. Adapter REST API Propam, pencocokan identitas, validasi payload, audit akses, revisi keputusan, kredensial server-side, dan delta sync merupakan pekerjaan integrasi mendatang, belum diimplementasikan. Kontrak resmi sumber tidak diasumsikan.
+
 - Dashboard tiap role tersedia di `/dashboard`; System Admin memiliki `/sistem` untuk pemeriksaan koneksi dan versi runtime secara read-only. Admin SSDM tidak memiliki akses teknis, sementara ringkasan Operator mengikuti scope aktif.
 - Profil memiliki CRUD kualifikasi dan riwayat jabatan berhalaman, penugasan tambahan aktif, serta upload/ganti/lepas dan unduh PDF privat. Edit mengirim hanya field yang berubah; field opsional dapat dikosongkan. File edit dikirim melalui POST dengan `_method=PUT` untuk kompatibilitas PHP 8.3.
 - Profil juga memuat CRUD penugasan operasi, prestasi, dan penghargaan dengan PDF privat opsional, soft delete, serta status verifikasi. Data contoh dalam tiga modul ini seluruhnya fiktif.
@@ -187,7 +210,7 @@ Gunakan endpoint `POST /api/v1/auth/login`, simpan nilai `token`, lalu kirim hea
 - Akun staff baru dipilih dari personel aktif yang sudah ada; satu personel satu akun. Nama diambil dari database, scope terpisah dari penempatan. Programmer eksternal boleh tidak terhubung ke personel. Akun demo/lama tetap dipertahankan tanpa menebak pemilik; saat mengedit akun staff lama, pilih personel pemilik terlebih dahulu.
 - Admin dapat mengarsipkan personel dengan alasan dan memulihkannya dari tab Arsip. Arsip tidak menutup jabatan/mengubah tanggal karier; akun terkait dinonaktifkan dan token dicabut. Pemulihan tidak otomatis mengaktifkan akun. Status pensiun/nonaktif tetap melalui perubahan status, mutasi melalui proses mutasi.
 - Penghapusan langsung jabatan utama aktif tidak tersedia; gunakan ganti jabatan/mutasi. Riwayat individual menggunakan soft delete; restore riwayat individual belum tersedia.
-- Data penilaian kinerja, assessment resmi, dan disiplin final masih direncanakan sebagai pengembangan lanjutan dengan kontrol akses tambahan.
+- Penilaian kinerja dan assessment resmi masih pengembangan lanjutan. Disiplin/kode etik tersedia sebagai prototype read-only sintetis; integrasi data nyata belum tersedia.
 - Audit trail penuh, audit akses disiplin, dan pemulihan riwayat individual direncanakan untuk pengembangan berikutnya. Urutan pangkat hanya pengurutan per jenis personel, bukan skor merit.
 
 Keputusan teknis lengkap dan checklist implementasi tersedia di `implementation_plan.md` dan `task.md`.

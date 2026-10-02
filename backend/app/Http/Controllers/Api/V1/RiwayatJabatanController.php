@@ -9,6 +9,7 @@ use App\Http\Resources\RiwayatJabatanResource;
 use App\Models\Personel;
 use App\Models\RiwayatJabatan;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -19,16 +20,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RiwayatJabatanController extends Controller
 {
-    public function index(Personel $personel): AnonymousResourceCollection
+    public function index(Request $request, Personel $personel): AnonymousResourceCollection
     {
         Gate::authorize('view', $personel);
+        $filters = $request->validate(['direction' => ['sometimes', 'required', 'in:asc,desc']]);
+        $direction = $filters['direction'] ?? 'desc';
 
         return RiwayatJabatanResource::collection(
             $personel->riwayatJabatan()
                 ->with(['unitOrganisasi', 'bidangFungsi', 'jenisPenugasan'])
-                ->latest('tanggal_mulai')
-                ->latest('id')
-                ->paginate(15),
+                ->orderBy('tanggal_mulai', $direction)
+                ->orderBy('id', $direction)
+                ->paginate(15)->withQueryString(),
         )->additional([
             'success' => true,
             'message' => 'Riwayat jabatan personel berhasil diambil.',

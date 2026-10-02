@@ -38,8 +38,8 @@ export function LoginPage() {
       <section className="login-story">
         <div className="story-content reveal">
           <span className="eyebrow dark">Sistem informasi sumber daya manusia</span>
-          <h1>Riwayat yang utuh.<br/><em>Keputusan yang terukur.</em></h1>
-          <p>Ruang kerja terpadu untuk menelusuri kualifikasi dan perjalanan jabatan personel POLRI secara akurat.</p>
+          <h1>Sistem Merit<br/><em>Personel Polri</em></h1>
+          <p>Pengelolaan data personel, kualifikasi, dan riwayat jabatan untuk mendukung pembinaan karier personel Polri.</p>
           <div className="story-metrics">
             <div><strong>01</strong><span>Profil terpadu</span></div>
             <div><strong>02</strong><span>Scope berjenjang</span></div>

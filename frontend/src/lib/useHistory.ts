@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { ApiError, apiRequest, peekApiCache } from './api'
 import type { PaginationMeta } from '../types'
 
-export function useHistory<T>(personnelId: number, kind: string) {
-  const path = useCallback((page: number) => `/personel/${personnelId}/${kind}?page=${page}`, [personnelId, kind])
+export function useHistory<T>(personnelId: number, kind: string, initialDirection?: 'asc' | 'desc') {
+  const [direction, setDirection] = useState(initialDirection)
+  const path = useCallback((page: number) => `/personel/${personnelId}/${kind}?page=${page}${direction ? `&direction=${direction}` : ''}`, [personnelId, kind, direction])
   const cachedFirstPage = peekApiCache<{ data: T[]; meta: PaginationMeta }>(path(1))
   const [items, setItems] = useState<T[]>(() => cachedFirstPage?.data ?? [])
   const [meta, setMeta] = useState<PaginationMeta | null>(() => cachedFirstPage?.meta ?? null)
@@ -29,5 +30,10 @@ export function useHistory<T>(personnelId: number, kind: string) {
     setPage(next)
   }
   const reload = () => { setLoading(true); setRevision((value) => value + 1) }
-  return { items, meta, page, loading, error, changePage, reload }
+  const changeDirection = (next: 'asc' | 'desc') => {
+    const cached = peekApiCache<{ data: T[]; meta: PaginationMeta }>(`/personel/${personnelId}/${kind}?page=1&direction=${next}`)
+    if (cached) { setItems(cached.data); setMeta(cached.meta) }
+    setError(''); setLoading(!cached); setPage(1); setDirection(next)
+  }
+  return { items, meta, page, loading, error, direction, changeDirection, changePage, reload }
 }
