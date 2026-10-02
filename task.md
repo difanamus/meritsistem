@@ -371,6 +371,7 @@ Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikas
 - [x] Label urutan pangkat dan pengelompokan POLRI/PNS, bukan nilai merit.
 - [x] Daftar baku pangkat lengkap termasuk enam Tamtama dan 17 PNS; pemeliharaan dibatasi System Admin pada API/UI, seed ulang menjaga ID/status lama.
 - [x] Seeder demo opsional 100 personel sintetis, variasi pendidikan/karier/merit dan cabang organisasi; idempotensi, perlindungan data lama, rollback, serta larangan production diuji.
+- [x] Sorting klik header Personel/Jabatan/Satker/Kualifikasi/Pengalaman/Operasi; indikator arah, dropdown sinkron, filter/scope dipertahankan, urutan server sebelum pagination dan kembali ke halaman pertama.
 - [x] Rancangan disiplin final dengan pembatasan akses/audit/versioning dicatat; belum modul input umum.
 - [x] Uji transaksi, validasi pendidikan/riwayat, linkage akun, role, arsip/restore; full suite SQLite dan PostgreSQL lulus.
 - [x] Verifikasi antarmuka baru di browser dan sinkronisasi kontrak OpenAPI/Postman.
@@ -378,6 +379,12 @@ Checkpoint optimasi pra-finishing: profil tidak lagi mengirim seluruh kualifikas
 Checkpoint revisi 2 Oktober 2026: pendaftaran beserta pendidikan wajib dan riwayat opsional, pemilih Satker satu kolom, linkage akun personel, arsip/pemulihan admin, serta label pangkat selesai. Seluruh 153 test / 824 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 17 test frontend, lint, build, Pint, parsing OpenAPI/Postman lulus. Browser memverifikasi formulir registrasi, pendidikan Polri opsional untuk PNS, pencarian personel pada akun, dan daftar arsip. Foto masih placeholder; riwayat pelanggaran masih rancangan terbatas, bukan modul input. Data pengguna lama tidak diisi dengan pendidikan atau hubungan akun rekaan. Setup/clone bersih, pengujian Postman menyeluruh, publikasi repository, dan video tetap tahap finishing.
 
 Checklist final submission berikut tetap belum selesai hanya karena revisi di atas selesai.
+
+Checkpoint sorting header: enam header klik dengan panah aktif dan `aria-sort`, keyboard focus, teks A–Z/Z–A, serta arah awal numerik menurun selesai. Backend menerima `jabatan` dan `satker`, mengambil satu nilai terindeks tanpa menggandakan baris, mengabaikan jabatan lama/tambahan/soft-deleted, dan memakai ID sebagai tie-breaker. Browser memverifikasi toggle Satker serta sorting dari halaman 2 kembali ke 1 sambil mempertahankan filter Aktif dan sinkronisasi dropdown. Seluruh 176 test / 971 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 20 test frontend, lint/build, dan Pint lulus. README, rencana, dan kontrak OpenAPI diperbarui.
+
+- [x] Sorting nama/jabatan/satker mengabaikan kapitalisasi tanpa mengubah teks tersimpan; indeks ekspresi nama ditambahkan.
+- [x] Akun demo Polsek Talang Empat `operator.polsek@example.test` dengan OWN_UNIT dan seeder upgrade tanpa reset akun lama.
+- [x] Tes campuran Dimas/diva/Eka dua arah sebelum pagination dan scope Polsek; 184 test / 1021 assertion backend lulus pada SQLite dan PostgreSQL terisolasi, 20 test frontend serta lint/build/Pint lulus. Migrasi tambahan dan seeder Polsek diterapkan lokal tanpa reset data.
 
 Verifikasi tambahan pangkat: 162 test / 865 assertion backend lulus pada SQLite dan PostgreSQL terisolasi; 17 test frontend, lint/build, dan Pint lulus. Browser Admin SSDM menampilkan pangkat Tamtama tanpa tombol tambah/edit/hapus. Seed pangkat diterapkan ke database lokal tanpa reset personel.
 

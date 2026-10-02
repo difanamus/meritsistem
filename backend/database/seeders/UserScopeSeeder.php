@@ -41,6 +41,7 @@ class UserScopeSeeder extends Seeder
         $this->assignScope('operator.polda@example.test', 'POLDA-BENGKULU', ScopeType::UnitAndDescendants);
         $this->assignScope('operator.polres@example.test', 'POLRES-BENTENG', ScopeType::UnitAndDescendants);
         $this->assignScope('operator.intelkam@example.test', 'SATINTEL-BENTENG', ScopeType::OwnUnit);
+        $this->call(PolsekDemoSeeder::class);
     }
 
     private function assignScope(string $email, string $kodeUnit, ScopeType $scopeType): void

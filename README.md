@@ -15,7 +15,7 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 - Satu jabatan utama aktif, dengan penugasan tambahan PS, PLT, atau PLH.
 - Pergantian jabatan dan mutasi atomik: menutup jabatan lama, memperbarui Satker bila perlu, lalu membuat jabatan baru dalam satu transaksi database.
 - Upload PDF pendukung/SK opsional maksimal 5 MB pada storage privat dan download berizin.
-- Filter fungsi, jenis kualifikasi, unit, pangkat, serta sorting jumlah kualifikasi dan durasi pengalaman.
+- Filter fungsi, jenis kualifikasi, unit, pangkat, serta sorting jumlah kualifikasi dan durasi pengalaman. Header tabel Personel/Jabatan/Satker/Kualifikasi/Pengalaman/Operasi dapat diklik untuk mengurutkan seluruh hasil server; klik ulang membalik arah, mempertahankan filter dan kembali ke halaman pertama. Panah dan dropdown menunjukkan urutan yang sama.
 - Antarmuka React responsif dengan navigasi berbasis role serta halaman administrasi pengguna dan scope.
 
 ## Technology stack
@@ -123,6 +123,11 @@ Semua akun seed menggunakan password `Password123!`.
 | `operator.polda@example.test` | Polda Bengkulu dan seluruh descendant |
 | `operator.polres@example.test` | Polres Bengkulu Tengah dan seluruh descendant |
 | `operator.intelkam@example.test` | Sat Intelkam Polres Bengkulu Tengah saja |
+| `operator.polsek@example.test` | Polsek Talang Empat saja |
+
+Untuk instalasi lama, tambahkan akun Polsek dengan `php artisan db:seed --class=PolsekDemoSeeder` dari folder backend. Seeder ini tidak mereset akun/password atau scope yang sudah ada. Password awal akun demo baru: `Password123!`.
+
+Sorting teks Personel, Jabatan, dan Satker mengabaikan huruf besar/kecil; penulisan asli tetap dipertahankan. Indeks ekspresi nama membantu pengurutan server sebelum pagination.
 
 ## Menjalankan test dan quality check
 

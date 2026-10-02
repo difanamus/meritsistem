@@ -91,6 +91,7 @@
       "item": [
         {
           "name": "Daftar + Filter Merit",
+          "description": "Sorting server sebelum pagination: nama, jabatan (utama aktif), satker, pangkat, jumlah_kualifikasi, durasi_pengalaman, jumlah_operasi, durasi_operasi, kualifikasi_terbaru, terbaru. Direction asc/desc. Filter dan scope tetap berlaku; UI header kembali ke halaman pertama ketika urutan berubah.",
           "request": {
             "method": "GET",
             "url": {

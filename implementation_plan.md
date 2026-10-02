@@ -85,6 +85,7 @@ Sesuai paparan, implementasi harus memperlihatkan:
 - Pencarian berdasarkan nama atau NRP/NIP.
 - Filter berdasarkan unit organisasi, pangkat, bidang/fungsi, jenis kualifikasi, dan status.
 - Sorting berdasarkan nama, pangkat, jumlah kualifikasi relevan, durasi pengalaman, atau data terbaru.
+- Header daftar personel menyediakan sorting server-side untuk nama, jabatan utama aktif, Satker, jumlah kualifikasi relevan, durasi pengalaman, dan jumlah operasi. Klik ulang membalik arah; indikator panah/aksesibilitas dan dropdown sinkron, filter dipertahankan, pagination kembali ke halaman pertama. Jabatan/Satker kosong dianggap teks kosong; nilai sama memakai ID sebagai tie-breaker stabil.
 
 Data minimum personel:
 
@@ -679,3 +680,5 @@ Yang tidak menjadi prioritas sebelum requirement wajib selesai:
 - Analytics kompleks atau machine learning.
 
 Fitur tersebut dapat disebut sebagai pengembangan lanjutan saat presentasi, bukan dipaksakan ke prototype hingga mengganggu stabilitas fungsi wajib.
+
+Koreksi sorting dan demo Polsek: pengurutan teks nama/jabatan/satker menggunakan LOWER di server sebelum pagination, tetap mempertahankan penulisan asli dan ID sebagai tie-breaker. Indeks ekspresi nama tersedia melalui migrasi tambahan. Akun demo operator Polsek Talang Empat memakai OWN_UNIT; PolsekDemoSeeder dapat dijalankan terpisah pada instalasi lama tanpa mereset password, status, atau scope akun yang sudah ada.

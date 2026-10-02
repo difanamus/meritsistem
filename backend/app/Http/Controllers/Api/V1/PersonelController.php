@@ -12,6 +12,7 @@ use App\Models\KualifikasiPersonel;
 use App\Models\Pangkat;
 use App\Models\Personel;
 use App\Models\RiwayatJabatan;
+use App\Models\UnitOrganisasi;
 use App\Models\User;
 use App\Services\MeritProfileService;
 use App\Services\OrganizationalScopeService;
@@ -92,6 +93,17 @@ class PersonelController extends Controller
         $direction = $filters['direction'] ?? 'asc';
 
         match ($filters['sort'] ?? 'nama') {
+            'jabatan' => $query->orderBy(
+                RiwayatJabatan::query()->selectRaw("COALESCE(LOWER(MAX(nama_jabatan)), '')")
+                    ->whereColumn('riwayat_jabatan.personel_id', 'personel.id')
+                    ->where('is_jabatan_utama', true)->whereNull('tanggal_selesai'),
+                $direction,
+            ),
+            'satker' => $query->orderBy(
+                UnitOrganisasi::query()->selectRaw("COALESCE(LOWER(MAX(nama)), '')")
+                    ->whereColumn('unit_organisasi.id', 'personel.unit_organisasi_id'),
+                $direction,
+            ),
             'terbaru' => $query->orderBy('created_at', $direction),
             'pangkat' => $query->orderBy('jenis_personel')->orderBy(
                 Pangkat::query()->select('urutan')->whereColumn('pangkat.id', 'personel.pangkat_id'),
@@ -102,7 +114,7 @@ class PersonelController extends Controller
             'kualifikasi_terbaru' => $query->orderBy('tahun_kualifikasi_terbaru', $direction),
             'jumlah_operasi' => $query->orderBy('jumlah_operasi', $direction),
             'durasi_operasi' => $query->orderBy('durasi_operasi_hari', $direction),
-            default => $query->orderBy('nama_lengkap', $direction),
+            default => $query->orderByRaw('LOWER(personel.nama_lengkap) '.$direction),
         };
 
         return PersonelResource::collection(
@@ -206,7 +218,7 @@ class PersonelController extends Controller
         $term = '%'.mb_strtolower($data['search']).'%';
         $people = Personel::query()->where('status', 'aktif')
             ->where(fn (Builder $query) => $query->whereRaw('LOWER(nama_lengkap) LIKE ?', [$term])->orWhere('nomor_identitas', 'like', $term))
-            ->orderBy('nama_lengkap')->orderBy('id')->limit(25)->get(['id', 'nama_lengkap', 'nomor_identitas']);
+            ->orderByRaw('LOWER(personel.nama_lengkap)')->orderBy('id')->limit(25)->get(['id', 'nama_lengkap', 'nomor_identitas']);
 
         return response()->json(['data' => $people]);
     }

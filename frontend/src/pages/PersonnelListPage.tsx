@@ -4,6 +4,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { Icon } from '../components/Icon'
 import { useAuth } from '../auth/useAuth'
 import { ApiError, apiRequest, peekApiCache, toQueryString } from '../lib/api'
+import { personnelColumns, personnelSortParams } from '../lib/personnelSorting'
 import type { PaginationMeta, Personnel, ReferenceOptions } from '../types'
 
 interface PersonnelResponse {
@@ -121,8 +122,12 @@ export function PersonnelListPage() {
             <select value={searchParams.get('status') ?? ''} onChange={(event) => setFilter('status', event.target.value)} aria-label="Filter status">
               <option value="">Semua status</option><option value="aktif">Aktif</option><option value="pensiun">Pensiun</option><option value="nonaktif">Nonaktif</option>
             </select>
-            <select value={searchParams.get('sort') ?? 'nama'} onChange={(event) => setFilter('sort', event.target.value)} aria-label="Urutkan data">
-              <option value="nama">Nama</option><option value="pangkat">Pangkat</option><option value="jumlah_kualifikasi">Kualifikasi terbanyak</option><option value="durasi_pengalaman">Pengalaman terlama</option><option value="kualifikasi_terbaru">Kualifikasi terbaru</option><option value="jumlah_operasi">Jumlah operasi</option><option value="durasi_operasi">Durasi operasi</option><option value="terbaru">Baru ditambahkan</option>
+            <select value={query.sort} onChange={(event) => {
+              const key = event.target.value
+              const direction = ['nama', 'jabatan', 'satker', 'pangkat'].includes(key) ? 'asc' : 'desc'
+              setSearchParams(personnelSortParams(searchParams, key, direction))
+            }} aria-label="Urutkan data">
+              <option value="nama">Nama</option><option value="jabatan">Jabatan saat ini</option><option value="satker">Satker</option><option value="pangkat">Pangkat</option><option value="jumlah_kualifikasi">Jumlah kualifikasi</option><option value="durasi_pengalaman">Durasi pengalaman</option><option value="kualifikasi_terbaru">Tahun kualifikasi terbaru</option><option value="jumlah_operasi">Jumlah operasi</option><option value="durasi_operasi">Durasi operasi</option><option value="terbaru">Tanggal ditambahkan</option>
             </select>
           </div>
 
@@ -133,14 +138,23 @@ export function PersonnelListPage() {
             <select value={searchParams.get('operasi_verifikasi') ?? ''} onChange={(event) => setFilter('operasi_verifikasi', event.target.value)} aria-label="Verifikasi operasi"><option value="">Semua status verifikasi</option><option value="terverifikasi">Terverifikasi</option><option value="belum_diverifikasi">Belum diverifikasi</option></select>
             <select value={searchParams.get('min_jumlah_operasi') ?? ''} onChange={(event) => setFilter('min_jumlah_operasi', event.target.value)} aria-label="Minimal jumlah operasi"><option value="">Semua jumlah operasi</option><option value="1">Minimal 1 operasi</option><option value="2">Minimal 2 operasi</option><option value="3">Minimal 3 operasi</option></select>
             <select value={searchParams.get('min_durasi_operasi_hari') ?? ''} onChange={(event) => setFilter('min_durasi_operasi_hari', event.target.value)} aria-label="Minimal durasi operasi"><option value="">Semua durasi operasi</option><option value="30">Minimal 30 hari</option><option value="90">Minimal 90 hari</option><option value="365">Minimal 365 hari</option></select>
-            <select value={searchParams.get('direction') ?? 'asc'} onChange={(event) => setFilter('direction', event.target.value)} aria-label="Arah urutan"><option value="asc">Terkecil → terbesar</option><option value="desc">Terbesar → terkecil</option></select>
+            <select value={query.direction} onChange={(event) => setFilter('direction', event.target.value)} aria-label="Arah urutan"><option value="asc">{['nama', 'jabatan', 'satker'].includes(query.sort) ? 'A → Z' : 'Terkecil → terbesar'}</option><option value="desc">{['nama', 'jabatan', 'satker'].includes(query.sort) ? 'Z → A' : 'Terbesar → terkecil'}</option></select>
           </div>
 
           {error && <div className="alert error">{error}</div>}
           {searchParams.get('sort') === 'pangkat' && <p className="dashboard-note">Dikelompokkan menurut jenis personel, lalu urutan pangkat. Urutan POLRI dan PNS tidak dibandingkan sebagai nilai merit.</p>}
           <div className={`data-table-wrap ${loading ? 'is-loading' : ''}`}>
             <table className="data-table">
-              <thead><tr><th>Personel</th><th>Jabatan saat ini</th><th>Satker</th><th>Kualifikasi relevan</th><th>Pengalaman</th><th>Operasi</th><th aria-label="Aksi"/></tr></thead>
+              <thead><tr>{personnelColumns.map((column) => {
+                const active = query.sort === column.key
+                const next = personnelSortParams(searchParams, column.key, column.defaultDirection, true)
+                const nextDirection = next.get('direction') === 'asc' ? 'menaik' : 'menurun'
+                return <th key={column.key} scope="col" aria-sort={active ? (query.direction === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                  <button type="button" className={`table-sort ${active ? 'active' : ''}`} aria-label={`Urutkan ${column.label}: ${nextDirection}`} title={`Klik untuk urutan ${nextDirection}`} onClick={() => setSearchParams(next)}>
+                    {column.label}<span className="table-sort-arrow" aria-hidden="true">{active ? (query.direction === 'asc' ? '↑' : '↓') : '↕'}</span>
+                  </button>
+                </th>
+              })}<th aria-label="Aksi"/></tr></thead>
               <tbody>
                 {!loading && personnel.map((person) => (
                   <tr key={person.id}>

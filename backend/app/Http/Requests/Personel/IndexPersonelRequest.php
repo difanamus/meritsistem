@@ -43,6 +43,8 @@ class IndexPersonelRequest extends FormRequest
             'status' => ['sometimes', Rule::enum(StatusPersonel::class)],
             'sort' => ['sometimes', Rule::in([
                 'nama',
+                'jabatan',
+                'satker',
                 'pangkat',
                 'terbaru',
                 'jumlah_kualifikasi',

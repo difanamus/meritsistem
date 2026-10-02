@@ -349,7 +349,8 @@ paths:
         - { name: status, in: query, schema: { $ref: '#/components/schemas/StatusPersonel' } }
         - name: sort
           in: query
-          schema: { type: string, enum: [nama, pangkat, terbaru, jumlah_kualifikasi, durasi_pengalaman, kualifikasi_terbaru, jumlah_operasi, durasi_operasi], default: nama }
+          description: Urutan seluruh hasil sesuai filter/scope sebelum pagination. Nama, jabatan, dan Satker diurutkan tanpa membedakan huruf besar/kecil; teks tersimpan tidak diubah. Jabatan memakai jabatan utama aktif; jabatan/Satker kosong dianggap teks kosong, nilai sama diurutkan berdasarkan ID.
+          schema: { type: string, enum: [nama, jabatan, satker, pangkat, terbaru, jumlah_kualifikasi, durasi_pengalaman, kualifikasi_terbaru, jumlah_operasi, durasi_operasi], default: nama }
         - { name: direction, in: query, schema: { type: string, enum: [asc, desc] } }
         - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 10 } }
         - { name: page, in: query, schema: { type: integer, minimum: 1 } }
