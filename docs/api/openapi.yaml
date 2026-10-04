@@ -1102,8 +1102,22 @@ components:
       type: object
       required: [jenis_personel, nomor_identitas, nama_lengkap, pangkat_id, tempat_lahir, tanggal_lahir, unit_organisasi_id, status, pendidikan_umum]
       properties:
-        pendidikan_umum: { $ref: '#/components/schemas/RegistrationEducation' }
-        pendidikan_polri: { $ref: '#/components/schemas/RegistrationEducation', description: Wajib jika jenis_personel polri. }
+        pendidikan_umum:
+          description: Minimal satu pendidikan umum; maksimal 20 catatan. Objek tunggal format lama tetap diterima. Multipart memakai pendidikan_umum[0][nama_kualifikasi] dan pendidikan_umum[0][dokumen_pendukung], dan seterusnya.
+          oneOf:
+            - $ref: '#/components/schemas/RegistrationEducation'
+            - type: array
+              minItems: 1
+              maxItems: 20
+              items: { $ref: '#/components/schemas/RegistrationEducation' }
+        pendidikan_polri:
+          description: Minimal satu catatan untuk POLRI; PNS boleh tidak mengirim, null, atau array kosong. Maksimal 20 catatan. Objek tunggal format lama tetap diterima; multipart memakai pendidikan_polri[0][nama_kualifikasi] dan pendidikan_polri[0][dokumen_pendukung].
+          oneOf:
+            - $ref: '#/components/schemas/RegistrationEducation'
+            - type: array
+              maxItems: 20
+              items: { $ref: '#/components/schemas/RegistrationEducation' }
+            - type: 'null'
         kualifikasi: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/KualifikasiInput' } }
         riwayat_jabatan: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/RiwayatJabatanInput' }, description: Tanggal selesai wajib pada registrasi. }
         penugasan_operasi: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/MeritInput' }, description: Aturan khusus penugasan-operasi berlaku. }

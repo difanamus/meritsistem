@@ -437,3 +437,12 @@ Checkpoint dataset demo: `DemoPersonnelSeeder` tidak masuk seed instalasi standa
 - [ ] Mengisi formulir pengumpulan dari paparan.
 - [ ] Menyimpan bukti pengumpulan.
 - [ ] Menyiapkan ringkasan keputusan teknis untuk wawancara pendalaman.
+
+### Pembaruan form pendidikan saat registrasi
+
+- [x] Judul Pendidikan Umum dan Pendidikan Polri tanpa kata wajib; tombol Tambah pendidikan dan batal catatan tambahan (maksimal 20 per jenis).
+- [x] Pendidikan umum memiliki pilihan jenjang SD–S3 dan label Jurusan / bidang studi (opsional); form pendidikan Polri tidak menampilkan jenjang/jurusan, dengan contoh Diktukba/Akpol.
+- [x] Minimal satu pendidikan umum; minimal satu pendidikan Polri untuk POLRI. PNS boleh tanpa pendidikan Polri atau menambahkannya jika ada.
+- [x] Backend menerima array pendidikan beserta PDF per catatan, mempertahankan format objek tunggal API/integrasi lama dan transaksi atomik tanpa perubahan skema database.
+- [x] Verifikasi: 219 tes backend / 1284 assertion, 22 tes frontend, build, lint dan Pint lulus. Browser memverifikasi tambah pendidikan umum/Polri, tambah/batal pendidikan PNS dan kembali ke POLRI. Tidak menyimpan personel uji ke database lokal.
+- [x] Kontrak OpenAPI dan indeks proyek diperbarui.

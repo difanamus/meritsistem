@@ -4,10 +4,12 @@ import { appendRegistrationData, emptyRegistrationRecord, initialRegistrationHis
 
 test('initial registration has separate education and no optional history rows', () => {
   const draft = initialRegistrationHistories()
-  assert.deepEqual(draft.pendidikan_umum.values, {})
-  assert.deepEqual(draft.pendidikan_polri.values, {})
+  assert.equal(draft.pendidikan_umum.length, 1)
+  assert.equal(draft.pendidikan_polri.length, 1)
+  assert.deepEqual(draft.pendidikan_umum[0].values, {})
+  assert.deepEqual(draft.pendidikan_polri[0].values, {})
   for (const key of ['kualifikasi', 'riwayat_jabatan', 'penugasan_operasi', 'prestasi', 'penghargaan']) assert.deepEqual(draft[key], [])
-  assert.notEqual(draft.pendidikan_umum.id, draft.pendidikan_polri.id)
+  assert.notEqual(draft.pendidikan_umum[0].id, draft.pendidikan_polri[0].id)
 })
 
 test('registration uses bracket notation and excludes internal UI fields and blank optional values', () => {
@@ -34,4 +36,18 @@ test('initial main position sends nivelering and notes with the existing API key
   const optionalBody = new FormData()
   appendRegistrationData(optionalBody, 'jabatan_utama', { values: { nama_jabatan: 'Banit Sat Intelkam', nivelering: '', keterangan: '' }, file: null }, 'dokumen_sk')
   assert.deepEqual([...optionalBody.entries()], [['jabatan_utama[nama_jabatan]', 'Banit Sat Intelkam']])
+})
+
+test('multiple education records retain their own values and PDF indexes', () => {
+  const body = new FormData()
+  const records = [
+    { values: { nama_kualifikasi: 'SMA', tahun: '2008' }, file: null },
+    { values: { nama_kualifikasi: 'Sarjana Hukum', jenjang: 'S1', bidang_studi: 'Hukum', tahun: '2015' }, file: new File(['%PDF-1.4'], 'sarjana.pdf', { type: 'application/pdf' }) },
+  ]
+  records.forEach((record, index) => appendRegistrationData(body, `pendidikan_umum[${index}]`, record, 'dokumen_pendukung'))
+  assert.equal(body.get('pendidikan_umum[0][nama_kualifikasi]'), 'SMA')
+  assert.equal(body.get('pendidikan_umum[1][nama_kualifikasi]'), 'Sarjana Hukum')
+  assert.equal(body.get('pendidikan_umum[1][jenjang]'), 'S1')
+  assert.equal(body.get('pendidikan_umum[1][dokumen_pendukung]').name, 'sarjana.pdf')
+  assert.equal(body.has('pendidikan_umum[0][dokumen_pendukung]'), false)
 })

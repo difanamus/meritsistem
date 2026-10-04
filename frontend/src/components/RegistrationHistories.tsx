@@ -10,6 +10,10 @@ const educationFields: MeritField[] = [
   { key: 'tanggal_mulai', label: 'Tanggal mulai', type: 'date' }, { key: 'tanggal_selesai', label: 'Tanggal selesai', type: 'date' },
   { key: 'nomor_dokumen', label: 'Nomor ijazah / SK' }, { key: 'keterangan', label: 'Keterangan', type: 'textarea' },
 ]
+const generalEducationFields: MeritField[] = educationFields.map((field) => field.key === 'jenjang'
+  ? { ...field, label: 'Jenjang pendidikan', type: 'select', options: ['SD', 'SMP', 'SMA/SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3'].map((level) => [level, level] as [string, string]) }
+  : field.key === 'bidang_studi' ? { ...field, label: 'Jurusan / bidang studi (opsional)' } : field)
+const policeEducationFields: MeritField[] = educationFields.filter((field) => !['jenjang', 'bidang_studi'].includes(field.key)).map((field) => field.key === 'nama_kualifikasi' ? { ...field, label: 'Nama pendidikan Polri' } : field)
 const jobFields: MeritField[] = [{ key: 'nama_jabatan', label: 'Nama jabatan', required: true }, { key: 'tanggal_mulai', label: 'Tanggal mulai', required: true, type: 'date' }, { key: 'tanggal_selesai', label: 'Tanggal selesai', required: true, type: 'date' }, { key: 'nivelering', label: 'Nivelering' }, { key: 'keterangan', label: 'Keterangan', type: 'textarea' }]
 const groups = [['kualifikasi', 'Kualifikasi tambahan'], ['riwayat_jabatan', 'Riwayat jabatan'], ['penugasan_operasi', 'Penugasan operasi'], ['prestasi', 'Prestasi'], ['penghargaan', 'Penghargaan']] as const
 
@@ -28,13 +32,17 @@ export function RegistrationHistories({ value, onChange, references, jenisPerson
     {errors[prefix]?.[0] && <p className="inline-field-error wide">{errors[prefix][0]}</p>}
   </div>
   return <>
-    <section className="form-section-shell"><div className="form-section-core"><div className="form-section-heading"><span>03</span><div><h2>Pendidikan umum · wajib</h2><p>Masukkan satu pendidikan yang telah diselesaikan. Riwayat lain dapat ditambahkan dari profil.</p></div></div>
-      {renderRecord('pendidikan_umum', value.pendidikan_umum, educationFields, 'dokumen_pendukung', (record) => onChange({ ...value, pendidikan_umum: record }))}
-    </div></section>
-    <section className="form-section-shell"><div className="form-section-core"><div className="form-section-heading"><span>04</span><div><h2>Pendidikan Polri · {jenisPersonel === 'polri' ? 'wajib' : 'opsional untuk PNS'}</h2><p>Dicatat sebagai riwayat pendidikan, tanpa penilaian otomatis.</p></div></div>
-      {jenisPersonel === 'pns' && <label className="inline-checkbox"><input type="checkbox" checked={value.pendidikan_polri !== null} onChange={(event) => onChange({ ...value, pendidikan_polri: event.target.checked ? emptyRegistrationRecord() : null })} />Personel PNS memiliki pendidikan Polri</label>}
-      {value.pendidikan_polri && renderRecord('pendidikan_polri', value.pendidikan_polri, educationFields, 'dokumen_pendukung', (record) => onChange({ ...value, pendidikan_polri: record }))}
-    </div></section>
+    {(['pendidikan_umum', 'pendidikan_polri'] as const).map((key, sectionIndex) => {
+      const isPolice = key === 'pendidikan_polri'
+      const title = isPolice ? 'Pendidikan Polri' : 'Pendidikan Umum'
+      const minimum = !isPolice || jenisPersonel === 'polri' ? 1 : 0
+      return <section className="form-section-shell" key={key}><div className="form-section-core"><div className="form-section-heading scope-heading"><span>{String(sectionIndex + 3).padStart(2, '0')}</span><div><h2>{title}</h2><p>{isPolice ? 'Contoh: Diktukba atau Akpol. Untuk PNS, isi hanya jika memiliki riwayat pendidikan Polri.' : 'Catat pendidikan yang telah diselesaikan. Jenjang: SD sampai S3; jurusan misalnya Hukum atau Teknik Informatika, dapat dikosongkan untuk SD/SMP.'}</p></div><button type="button" className="scope-add" disabled={value[key].length >= 20} onClick={() => onChange({ ...value, [key]: [...value[key], emptyRegistrationRecord()] })}>+ Tambah pendidikan</button></div>
+        {errors[key]?.[0] && <p className="inline-field-error">{errors[key][0]}</p>}
+        {value[key].map((record, index) => <div className="registration-record" key={record.id}><div className="scope-row-title"><strong>{title} {index + 1}</strong>{value[key].length > minimum && <button type="button" onClick={() => onChange({ ...value, [key]: value[key].filter((_, itemIndex) => itemIndex !== index) })}>Batalkan pendidikan ini</button>}</div>
+          {renderRecord(`${key}.${index}`, record, isPolice ? policeEducationFields : generalEducationFields, 'dokumen_pendukung', (updated) => onChange({ ...value, [key]: value[key].map((item, itemIndex) => itemIndex === index ? updated : item) }))}
+        </div>)}
+      </div></section>
+    })}
     {groups.map(([key, title], groupIndex) => <section className="form-section-shell" key={key}><div className="form-section-core"><div className="form-section-heading scope-heading"><span>{String(groupIndex + 5).padStart(2, '0')}</span><div><h2>{title}</h2><p>Opsional. Jika tidak ditambah, riwayat tetap kosong dan dapat dilengkapi nanti di profil.</p></div><button type="button" className="scope-add" disabled={value[key].length >= 20} onClick={() => {
       const kind = key === 'penugasan_operasi' ? 'penugasan-operasi' : key
       const record = emptyRegistrationRecord()

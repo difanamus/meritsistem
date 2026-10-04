@@ -42,8 +42,7 @@ export function PersonnelFormPage() {
       const invalidFiles: Record<string, string[]> = {}
       const validateFile = (key: string, file: File | null) => { const message = pdfError(file); if (message) invalidFiles[key] = [message] }
       if (form.status === 'aktif') validateFile('jabatan_utama.dokumen_sk', positionFile)
-      validateFile('pendidikan_umum.dokumen_pendukung', histories.pendidikan_umum.file)
-      if (histories.pendidikan_polri) validateFile('pendidikan_polri.dokumen_pendukung', histories.pendidikan_polri.file)
+      for (const key of ['pendidikan_umum', 'pendidikan_polri'] as const) histories[key].forEach((record, index) => validateFile(`${key}.${index}.dokumen_pendukung`, record.file))
       for (const key of ['kualifikasi', 'riwayat_jabatan', 'penugasan_operasi', 'prestasi', 'penghargaan'] as const) histories[key].forEach((record, index) => validateFile(`${key}.${index}.${key === 'kualifikasi' ? 'dokumen_pendukung' : key === 'riwayat_jabatan' ? 'dokumen_sk' : 'dokumen'}`, record.file))
       if (Object.keys(invalidFiles).length) { setErrors(invalidFiles); setError('Periksa PDF yang ditandai sebelum menyimpan.'); return }
     }
@@ -54,8 +53,7 @@ export function PersonnelFormPage() {
       for (const [key, value] of Object.entries(common)) body.append(key, String(value))
       body.append('unit_organisasi_id', form.unit_organisasi_id)
       if (form.status === 'aktif') appendRegistrationData(body, 'jabatan_utama', { values: { nama_jabatan: form.nama_jabatan, bidang_fungsi_id: form.bidang_fungsi_id, jenis_penugasan_id: form.jenis_penugasan_id, tanggal_mulai: form.tanggal_mulai, nivelering: form.nivelering, keterangan: form.keterangan }, file: positionFile }, 'dokumen_sk')
-      appendRegistrationData(body, 'pendidikan_umum', histories.pendidikan_umum, 'dokumen_pendukung')
-      if (histories.pendidikan_polri) appendRegistrationData(body, 'pendidikan_polri', histories.pendidikan_polri, 'dokumen_pendukung')
+      for (const key of ['pendidikan_umum', 'pendidikan_polri'] as const) histories[key].forEach((record, index) => appendRegistrationData(body, `${key}[${index}]`, record, 'dokumen_pendukung'))
       for (const key of ['kualifikasi', 'riwayat_jabatan', 'penugasan_operasi', 'prestasi', 'penghargaan'] as const) histories[key].forEach((record, index) => appendRegistrationData(body, `${key}[${index}]`, record, key === 'kualifikasi' ? 'dokumen_pendukung' : key === 'riwayat_jabatan' ? 'dokumen_sk' : 'dokumen'))
     }
     try {
@@ -74,7 +72,7 @@ export function PersonnelFormPage() {
     <form onSubmit={handleSubmit} className="person-form">
       {error && <div className="alert error full-span">{error}</div>}
       <section className="form-section-shell reveal delay-one"><div className="form-section-core"><div className="form-section-heading"><span>01</span><div><h2>Identitas dasar</h2><p>Data pengenal utama personel.</p></div></div><div className="form-grid">
-        <label><span>Jenis personel</span><select value={form.jenis_personel} onChange={(e) => { setField('jenis_personel', e.target.value); setField('pangkat_id', ''); setHistories((current) => ({ ...current, pendidikan_polri: e.target.value === 'polri' ? current.pendidikan_polri ?? emptyRegistrationRecord() : null })) }}><option value="polri">POLRI</option><option value="pns">PNS</option></select></label>
+        <label><span>Jenis personel</span><select value={form.jenis_personel} onChange={(e) => { setField('jenis_personel', e.target.value); setField('pangkat_id', ''); setHistories((current) => ({ ...current, pendidikan_polri: e.target.value === 'polri' ? current.pendidikan_polri.length ? current.pendidikan_polri : [emptyRegistrationRecord()] : [] })) }}><option value="polri">POLRI</option><option value="pns">PNS</option></select></label>
         <label><span>NRP / NIP</span><input value={form.nomor_identitas} onChange={(e) => setField('nomor_identitas', e.target.value)} inputMode="numeric" required />{fieldError('nomor_identitas') && <small>{fieldError('nomor_identitas')}</small>}</label>
         <label className="wide"><span>Nama lengkap</span><input value={form.nama_lengkap} onChange={(e) => setField('nama_lengkap', e.target.value)} required />{fieldError('nama_lengkap') && <small>{fieldError('nama_lengkap')}</small>}</label>
         <label><span>Pangkat</span><select value={form.pangkat_id} onChange={(e) => setField('pangkat_id', e.target.value)} required><option value="">Pilih pangkat</option>{ranks.map((rank) => <option key={rank.id} value={rank.id}>{rank.nama}</option>)}</select>{fieldError('pangkat_id') && <small>{fieldError('pangkat_id')}</small>}</label>

@@ -55,6 +55,96 @@ class RegistrationAndArchiveApiTest extends TestCase
         return [['pendidikan_umum'], ['pendidikan_polri']];
     }
 
+    public function test_registration_saves_multiple_educations_and_each_private_pdf(): void
+    {
+        Storage::fake('local');
+        $actor = User::factory()->create(['role' => UserRole::AdminSsdm]);
+        Sanctum::actingAs($actor);
+        $data = $this->payload();
+        $data['pendidikan_umum'] = [$data['pendidikan_umum'], ['nama_kualifikasi' => 'Sarjana Hukum', 'jenjang' => 'S1', 'bidang_studi' => 'Hukum', 'tahun' => 2015]];
+        $data['pendidikan_polri'] = [['nama_kualifikasi' => 'Diktukba', 'tahun' => 2009], ['nama_kualifikasi' => 'Pendidikan lanjutan', 'tahun' => 2018]];
+        $data['pendidikan_umum'][1]['dokumen_pendukung'] = UploadedFile::fake()->createWithContent('sarjana.pdf', "%PDF-1.4\nUji");
+        $data['pendidikan_polri'][0]['dokumen_pendukung'] = UploadedFile::fake()->createWithContent('diktukba.pdf', "%PDF-1.4\nUji");
+        $data['pendidikan_polri'][0]['jenis_kualifikasi_id'] = JenisKualifikasi::query()->where('kode', 'PENDIDIKAN_UMUM')->value('id');
+
+        $response = $this->post('/api/v1/personel', $data, ['Accept' => 'application/json'])->assertCreated()->assertJsonPath('data.jumlah_kualifikasi', 4);
+
+        $id = $response->json('data.id');
+        $this->assertDatabaseHas('kualifikasi_personel', ['personel_id' => $id, 'nama_kualifikasi' => 'Sarjana Hukum', 'jenjang' => 'S1', 'bidang_studi' => 'Hukum', 'created_by' => $actor->id]);
+        $this->assertDatabaseHas('kualifikasi_personel', ['personel_id' => $id, 'nama_kualifikasi' => 'Diktukba', 'jenis_kualifikasi_id' => JenisKualifikasi::query()->where('kode', 'PENDIDIKAN_POLRI')->value('id')]);
+        foreach (['Sarjana Hukum', 'Diktukba'] as $name) {
+            Storage::disk('local')->assertExists(KualifikasiPersonel::query()->where('nama_kualifikasi', $name)->value('dokumen_pendukung_path'));
+        }
+    }
+
+    public static function invalidEducationLists(): array
+    {
+        return [
+            'general empty' => ['pendidikan_umum', [], 'pendidikan_umum'],
+            'police empty' => ['pendidikan_polri', [], 'pendidikan_polri'],
+            'missing name in second record' => ['pendidikan_umum', [['nama_kualifikasi' => 'SMA', 'tahun' => 2008], ['tahun' => 2015]], 'pendidikan_umum.1.nama_kualifikasi'],
+            'invalid year in second police record' => ['pendidikan_polri', [['nama_kualifikasi' => 'Diktukba', 'tahun' => 2009], ['nama_kualifikasi' => 'Akpol', 'tahun' => 'abc']], 'pendidikan_polri.1.tahun'],
+            'dates in same record' => ['pendidikan_umum', [['nama_kualifikasi' => 'SMA', 'tahun' => 2008], ['nama_kualifikasi' => 'S1', 'tahun' => 2015, 'tanggal_mulai' => '2012-01-01', 'tanggal_selesai' => '2011-01-01']], 'pendidikan_umum.1.tanggal_selesai'],
+            'extra sensitive key' => ['pendidikan_polri', [['nama_kualifikasi' => 'Akpol', 'tahun' => 2009, 'created_by' => 999]], 'pendidikan_polri.0'],
+            'non-record item' => ['pendidikan_umum', ['SMA'], 'pendidikan_umum.0'],
+            'over limit' => ['pendidikan_umum', array_fill(0, 21, ['nama_kualifikasi' => 'SMA', 'tahun' => 2008]), 'pendidikan_umum'],
+        ];
+    }
+
+    #[DataProvider('invalidEducationLists')]
+    public function test_invalid_education_list_returns_422_without_partial_registration(string $section, array $education, string $error): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::AdminSsdm]));
+        $data = $this->payload();
+        $data[$section] = $education;
+
+        $this->postJson('/api/v1/personel', $data)->assertUnprocessable()->assertJsonValidationErrors($error);
+
+        $this->assertDatabaseCount('personel', 0);
+        $this->assertDatabaseCount('kualifikasi_personel', 0);
+        $this->assertDatabaseCount('riwayat_jabatan', 0);
+    }
+
+    public function test_pns_can_submit_multiple_general_educations_without_police_education(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::AdminSsdm]));
+        $data = $this->payload();
+        $data['jenis_personel'] = 'pns';
+        $data['pangkat_id'] = Pangkat::factory()->create(['jenis_personel' => 'pns'])->id;
+        $data['pendidikan_umum'] = [$data['pendidikan_umum'], ['nama_kualifikasi' => 'S1', 'tahun' => 2015]];
+        $data['pendidikan_polri'] = [];
+
+        $this->postJson('/api/v1/personel', $data)->assertCreated()->assertJsonPath('data.jumlah_kualifikasi', 2);
+
+        $this->assertDatabaseCount('kualifikasi_personel', 2);
+    }
+
+    public function test_pns_can_optionally_submit_police_education(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::AdminSsdm]));
+        $data = $this->payload();
+        $data['jenis_personel'] = 'pns';
+        $data['pangkat_id'] = Pangkat::factory()->create(['jenis_personel' => 'pns'])->id;
+        $data['pendidikan_umum'] = [$data['pendidikan_umum']];
+        $data['pendidikan_polri'] = [['nama_kualifikasi' => 'Pendidikan Polri', 'tahun' => 2015]];
+
+        $this->postJson('/api/v1/personel', $data)->assertCreated()->assertJsonPath('data.jumlah_kualifikasi', 2);
+
+        $this->assertDatabaseHas('kualifikasi_personel', ['nama_kualifikasi' => 'Pendidikan Polri', 'jenis_kualifikasi_id' => JenisKualifikasi::query()->where('kode', 'PENDIDIKAN_POLRI')->value('id')]);
+    }
+
+    public function test_registration_accepts_twenty_education_records_per_section(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => UserRole::AdminSsdm]));
+        $data = $this->payload();
+        $data['pendidikan_umum'] = array_fill(0, 20, $data['pendidikan_umum']);
+        $data['pendidikan_polri'] = array_fill(0, 20, $data['pendidikan_polri']);
+
+        $this->postJson('/api/v1/personel', $data)->assertCreated()->assertJsonPath('data.jumlah_kualifikasi', 40);
+
+        $this->assertDatabaseCount('kualifikasi_personel', 40);
+    }
+
     #[DataProvider('educationCases')]
     public function test_missing_required_education_returns_422_without_partial_registration(string $section): void
     {

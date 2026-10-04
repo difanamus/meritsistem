@@ -59,9 +59,16 @@ class StorePersonelRequest extends FormRequest
         $qualificationRules = (new StoreKualifikasiRequest)->rules();
         foreach (['pendidikan_umum', 'pendidikan_polri'] as $section) {
             if (is_array($this->input($section))) {
-                $rules[$section] = [...$rules[$section], 'array:'.implode(',', array_keys($qualificationRules))];
-                $rules += $this->nestedRules($section, $qualificationRules);
-                $rules[$section.'.tahun'] = ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)];
+                $isList = array_is_list($this->input($section));
+                $prefix = $isList ? $section.'.*' : $section;
+                if ($isList) {
+                    $rules[$section] = [...$rules[$section], 'list', 'max:20'];
+                    $rules[$prefix] = ['required', 'array:'.implode(',', array_keys($qualificationRules))];
+                } else {
+                    $rules[$section] = [...$rules[$section], 'array:'.implode(',', array_keys($qualificationRules))];
+                }
+                $rules += $this->nestedRules($prefix, $qualificationRules);
+                $rules[$prefix.'.tahun'] = ['required', 'integer', 'min:1900', 'max:'.(now()->year + 1)];
             }
         }
         $groups = ['kualifikasi' => $qualificationRules, 'riwayat_jabatan' => (new StoreRiwayatJabatanRequest)->rules()];
@@ -84,7 +91,14 @@ class StorePersonelRequest extends FormRequest
         $types = JenisKualifikasi::query()->where('is_active', true)->whereIn('kode', ['PENDIDIKAN_UMUM', 'PENDIDIKAN_POLRI'])->pluck('id', 'kode');
         foreach (['pendidikan_umum' => 'PENDIDIKAN_UMUM', 'pendidikan_polri' => 'PENDIDIKAN_POLRI'] as $section => $code) {
             if (is_array($this->input($section))) {
-                $this->merge([$section => [...$this->input($section), 'jenis_kualifikasi_id' => $types[$code] ?? null]]);
+                $education = $this->input($section);
+                if (array_is_list($education)) {
+                    $education = array_map(fn ($record) => is_array($record)
+                        ? [...$record, 'jenis_kualifikasi_id' => $types[$code] ?? null] : $record, $education);
+                } else {
+                    $education['jenis_kualifikasi_id'] = $types[$code] ?? null;
+                }
+                $this->merge([$section => $education]);
             }
         }
     }

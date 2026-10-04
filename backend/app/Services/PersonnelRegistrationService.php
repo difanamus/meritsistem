@@ -31,7 +31,8 @@ class PersonnelRegistrationService
                 $qualifications = $data['kualifikasi'] ?? [];
                 foreach (['pendidikan_umum', 'pendidikan_polri'] as $section) {
                     if (! empty($data[$section])) {
-                        $qualifications[] = $data[$section];
+                        $education = $data[$section];
+                        $qualifications = [...$qualifications, ...(array_is_list($education) ? $education : [$education])];
                     }
                 }
                 foreach ($qualifications as $record) {

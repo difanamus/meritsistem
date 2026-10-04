@@ -38,6 +38,7 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 ├── docs/api/openapi.yaml    Spesifikasi OpenAPI
 ├── docs/postman/            Collection dan environment Postman
 ├── compose.yaml             PostgreSQL lokal
+├── PROJECT_INDEX.md         Peta fitur/kode dan konteks untuk AI lain
 ├── implementation_plan.md   Keputusan dan rencana implementasi
 └── task.md                  Checklist pengerjaan
 ```
