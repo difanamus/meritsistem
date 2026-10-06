@@ -37,6 +37,8 @@ Thumbs.db
 Desktop.ini
 
 # Local AI coding-agent metadata (not required to install or run the app)
+implementation_plan.md
+task.md
 .claude/
 .codex/
 .kiro/

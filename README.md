@@ -38,9 +38,7 @@ Project ini dibuat untuk Uji Pemrograman SI-SDM Polri tahap CRUD. Seluruh layana
 ├── docs/api/openapi.yaml    Spesifikasi OpenAPI
 ├── docs/postman/            Collection dan environment Postman
 ├── compose.yaml             PostgreSQL lokal
-├── PROJECT_INDEX.md         Peta fitur/kode dan konteks untuk AI lain
-├── implementation_plan.md   Keputusan dan rencana implementasi
-└── task.md                  Checklist pengerjaan
+└── PROJECT_INDEX.md         Peta fitur/kode dan konteks proyek
 ```
 
 ## Prasyarat
@@ -159,9 +157,9 @@ npm run lint
 npm run build
 ```
 
-Checkpoint Point 6: 126 test / 668 assertion backend lulus di SQLite dan PostgreSQL 17; 11 test frontend, lint, build, format Pint, serta validasi OpenAPI/Postman lulus. Smoke QA empat role, akses luar scope, dan kondisi tanpa hasil juga lulus. Rincian ada di [`task.md`](task.md).
+Audit final 6 Oktober 2026: 219 test / 1.284 assertion backend lulus di SQLite dan PostgreSQL 17 pada database audit terpisah; 22 test frontend, lint, build, serta Pint lulus. Instalasi dari clone GitHub bersih berhasil, termasuk migrasi dan seed pada database baru SQLite dan PostgreSQL. OpenAPI memuat 50 operasi dengan 276 referensi lokal yang valid; JSON Postman valid. Audit dependency Composer dan npm tidak menemukan advisory keamanan.
 
-Narasi singkat demo Point 5: buka profil personel dan tunjukkan tiga riwayat yang dipisah (operasi, prestasi, penghargaan); tambah operasi fiktif dengan PDF opsional; verifikasi sebagai Admin SSDM lalu ubah datanya untuk menunjukkan status kembali belum diverifikasi; buka daftar personel dan filter wilayah/fungsi operasi atau urutkan jumlah/durasi. Jelaskan bahwa angka tersebut fakta kumulatif, bukan skor merit atau keputusan karier otomatis. Video presentasi resmi belum dibuat.
+Demo tambahan: buka profil personel dan tunjukkan tiga riwayat yang dipisah (operasi, prestasi, penghargaan); tambah operasi fiktif dengan PDF opsional; verifikasi sebagai Admin SSDM lalu ubah datanya untuk menunjukkan status kembali belum diverifikasi; buka daftar personel dan filter wilayah/fungsi operasi atau urutkan jumlah/durasi. Angka tersebut merupakan fakta kumulatif, bukan skor merit atau keputusan karier otomatis. Demo tambahan ini tidak menggantikan CRUD personel dan riwayat jabatan yang menjadi inti soal.
 
 ## Aturan domain penting
 
@@ -230,4 +228,4 @@ Endpoint baca: `GET /api/v1/personel/{personel}/disiplin-prototype?page=1`, maks
 - Penilaian kinerja dan assessment resmi masih pengembangan lanjutan. Disiplin/kode etik tersedia sebagai prototype read-only sintetis; integrasi data nyata belum tersedia.
 - Audit trail penuh, audit akses disiplin, dan pemulihan riwayat individual direncanakan untuk pengembangan berikutnya. Urutan pangkat hanya pengurutan per jenis personel, bukan skor merit.
 
-Keputusan teknis lengkap dan checklist implementasi tersedia di `implementation_plan.md` dan `task.md`.
+Struktur data dan alur teknis tersedia di [`docs/architecture.md`](docs/architecture.md).

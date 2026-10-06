@@ -37,8 +37,6 @@ Tambahan prototype: operasi, prestasi, penghargaan, informasi disiplin simulasi,
 | `docs/postman/Local.postman_environment.json` | Environment Postman lokal |
 | `docs/architecture.md` | Diagram arsitektur dan relasi |
 | `README.md` | Instalasi, konfigurasi, akun demo, penggunaan dan testing |
-| `implementation_plan.md` | Rencana dan keputusan pengembangan |
-| `task.md` | Checklist dan catatan pengerjaan/pengujian sebelumnya |
 | `compose.yaml` | PostgreSQL lokal saja; bukan container seluruh aplikasi |
 
 Database target PostgreSQL 17. SQLite digunakan untuk pengujian/fallback lokal, bukan bukti bahwa performanya sama dengan PostgreSQL. PostgreSQL menggunakan indeks pencarian termasuk `pg_trgm`.
